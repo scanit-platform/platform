@@ -1,11 +1,6 @@
 export type AuthMode = "signup" | "signin";
 
-export type AuthField =
-  | "firstName"
-  | "lastName"
-  | "email"
-  | "phone"
-  | "password";
+export type AuthField = "name" | "email" | "password";
 
 export type AuthActionState = {
   message: string;

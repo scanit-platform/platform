@@ -1,10 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { login, register } from "@/src/features/auth/api/auth-api";
 import {
   initialAuthState,
   type AuthActionState,
 } from "@/src/features/auth/model/auth-state";
+import { storeAuthToken } from "@/src/features/auth/model/session";
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -25,11 +27,7 @@ export async function submitAuthForm(
 
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "").trim();
-  const firstName = String(formData.get("firstName") ?? "").trim();
-  const lastName = String(formData.get("lastName") ?? "").trim();
-  const countryCode = String(formData.get("countryCode") ?? "").trim();
-  const localPhoneDigits = String(formData.get("phone") ?? "").replace(/\D/g, "");
-  const fullPhone = `${countryCode}${localPhoneDigits}`;
+  const name = String(formData.get("name") ?? "").trim();
 
   const fieldErrors: AuthActionState["fieldErrors"] = {};
 
@@ -39,25 +37,17 @@ export async function submitAuthForm(
     fieldErrors.email = "Enter a valid email address.";
   }
 
-  if (mode === "signin") {
-    if (!password) {
-      fieldErrors.password = "Password is required.";
-    }
+  if (!password) {
+    fieldErrors.password = "Password is required.";
   }
 
   if (mode === "signup") {
-    if (!firstName) {
-      fieldErrors.firstName = "First name is required.";
+    if (!name) {
+      fieldErrors.name = "Name is required.";
     }
 
-    if (!lastName) {
-      fieldErrors.lastName = "Last name is required.";
-    }
-
-    if (!localPhoneDigits) {
-      fieldErrors.phone = "Phone is required.";
-    } else if (fullPhone.length < 10) {
-      fieldErrors.phone = "Enter a valid phone number.";
+    if (password && password.length < 6) {
+      fieldErrors.password = "Password must be at least 6 characters.";
     }
   }
 
@@ -65,6 +55,31 @@ export async function submitAuthForm(
     return {
       message: "Check the highlighted fields and try again.",
       fieldErrors,
+    };
+  }
+
+  try {
+    const response =
+      mode === "signup"
+        ? await register({ name, email, password })
+        : await login({ email, password });
+    const tokenErrorMessage = await storeAuthToken(response);
+
+    if (tokenErrorMessage) {
+      return {
+        ...initialAuthState,
+        message: tokenErrorMessage,
+      };
+    }
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Authentication failed. Try again.";
+
+    return {
+      ...initialAuthState,
+      message,
     };
   }
 
