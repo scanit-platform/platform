@@ -1,0 +1,425 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --page-bg: #f8fafc;
+  --page-foreground: #0f172a;
+  --scanit-primary: #0d9488;
+  --scanit-primary-light: #14b8a6;
+  --scanit-cta: #f59e0b;
+  --scanit-success: #10b981;
+  --scanit-warning: #f97316;
+  --scanit-danger: #ef4444;
+  --scanit-surface: #ffffff;
+  --scanit-text: #0f172a;
+  --scanit-text-secondary: #64748b;
+  --scanit-text-muted: #94a3b8;
+  --scanit-label: #475569;
+  --scanit-border: #e2e8f0;
+  --scanit-border-strong: #cbd5e1;
+  --scanit-soft: #f1f5f9;
+  --scanit-primary-soft: #f0fdfa;
+  --scanit-primary-softer: #ccfbf1;
+  --scanit-warning-soft: #fef3c7;
+  --scanit-warning-softer: #fffbeb;
+  --scanit-warning-text: #b45309;
+  --scanit-danger-soft: #fee2e2;
+  --scanit-danger-softer: #fef2f2;
+  --scanit-danger-text: #b91c1c;
+  --scanit-shadow: 0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+  --scanit-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --glass-border: var(--scanit-border);
+  --glass-fill: var(--scanit-surface);
+  --glass-fill-strong: var(--scanit-soft);
+  --glass-muted: var(--scanit-text-secondary);
+  --field-text: var(--scanit-text);
+  --field-placeholder: var(--scanit-text-muted);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-page-bg: var(--page-bg);
+  --color-page-foreground: var(--page-foreground);
+  --color-glass-border: var(--glass-border);
+  --color-glass-fill: var(--glass-fill);
+  --color-glass-fill-strong: var(--glass-fill-strong);
+  --color-glass-muted: var(--glass-muted);
+  --color-field-text: var(--field-text);
+  --color-field-placeholder: var(--field-placeholder);
+  --font-sans: var(--font-dm-sans);
+  --font-serif: var(--font-space-grotesk);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--background);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: transparent;
+  color: var(--foreground);
+  font-family: var(--font-dm-sans), sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(13, 148, 136, 0.18);
+  color: var(--scanit-text);
+}
+
+.auth-glass-field {
+  background: var(--scanit-surface);
+  border: 1px solid var(--scanit-border);
+  color: var(--scanit-text);
+  box-shadow: none;
+}
+
+.auth-glass-field::placeholder {
+  color: var(--field-placeholder);
+}
+
+.auth-glass-field:hover {
+  border-color: var(--scanit-border-strong);
+  background: var(--scanit-surface);
+}
+
+.auth-glass-field:focus,
+.auth-glass-field:focus-visible {
+  border-color: var(--scanit-primary);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+  outline: none;
+}
+
+.auth-glass-field:-webkit-autofill,
+.auth-glass-field:-webkit-autofill:hover,
+.auth-glass-field:-webkit-autofill:focus,
+.auth-glass-field:-webkit-autofill:active {
+  -webkit-box-shadow:
+    0 0 0 100px var(--scanit-surface) inset,
+    0 0 0 3px rgba(13, 148, 136, 0.08);
+  -webkit-text-fill-color: var(--scanit-text);
+  border: 1px solid var(--scanit-border);
+  caret-color: var(--scanit-text);
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+.scanit-auth-shell {
+  min-height: 100vh;
+  background: var(--page-bg);
+  color: var(--scanit-text);
+}
+
+.scanit-app-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
+  display: flex;
+  width: 240px;
+  flex-direction: column;
+  border-right: 1px solid var(--scanit-border);
+  background: var(--scanit-surface);
+}
+
+.scanit-app-brand {
+  display: flex;
+  height: 72px;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--scanit-border);
+  padding: 0 14px;
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--scanit-text);
+}
+
+.scanit-app-nav {
+  padding: 20px 0;
+}
+
+.scanit-app-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-left: 3px solid transparent;
+  padding: 10px 16px;
+  color: var(--scanit-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.scanit-app-nav-item-active {
+  border-left-color: var(--scanit-primary);
+  background: var(--scanit-primary-soft);
+  color: var(--scanit-primary);
+}
+
+.scanit-app-main {
+  min-height: 100vh;
+}
+
+@media (min-width: 768px) {
+  .scanit-app-main {
+    margin-left: 240px;
+  }
+}
+
+.scanit-app-header {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--scanit-border);
+  background: var(--scanit-surface);
+  padding: 16px 32px;
+}
+
+.scanit-app-greeting {
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--scanit-text);
+}
+
+.scanit-app-page {
+  padding: 32px;
+  animation: auth-field-enter 300ms ease;
+}
+
+.scanit-auth-card {
+  background: var(--scanit-surface);
+  border: 1px solid var(--scanit-border);
+  border-radius: 8px;
+  box-shadow: var(--scanit-shadow);
+}
+
+.scanit-auth-panel {
+  background: var(--scanit-surface);
+  border: 1px solid var(--scanit-border);
+  border-radius: 8px;
+  box-shadow: var(--scanit-shadow);
+}
+
+.scanit-auth-icon-tile {
+  background: var(--scanit-primary-soft);
+  color: var(--scanit-primary);
+  border-radius: 8px;
+}
+
+.scanit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 150ms ease;
+}
+
+.scanit-btn-primary {
+  background: var(--scanit-primary);
+  color: white;
+}
+
+.scanit-btn-primary:hover {
+  background: var(--scanit-primary-light);
+}
+
+.scanit-btn-cta {
+  background: var(--scanit-cta);
+  color: white;
+}
+
+.scanit-btn-secondary {
+  border: 1px solid var(--scanit-border);
+  background: var(--scanit-surface);
+  color: var(--scanit-text);
+  box-shadow: var(--scanit-shadow);
+}
+
+.scanit-btn-secondary:hover {
+  background: var(--page-bg);
+}
+
+.scanit-form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--scanit-label);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.scanit-validation-error {
+  margin-top: 8px;
+  display: block;
+  color: var(--scanit-danger-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.scanit-auth-error {
+  border: 1px solid var(--scanit-danger-soft);
+  background: var(--scanit-danger-softer);
+  color: var(--scanit-danger-text);
+}
+
+@keyframes auth-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.94);
+    filter: blur(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes auth-field-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.premium-trail-glow-soft {
+  filter: blur(8px);
+  opacity: 0.34;
+}
+
+.premium-trail-glow-medium {
+  filter: blur(11px);
+  opacity: 0.28;
+}
+
+@keyframes premium-trail-float-a {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(-12px, 8px, 0);
+  }
+
+  100% {
+    transform: translate3d(10px, -10px, 0);
+  }
+}
+
+@keyframes premium-trail-float-b {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.84;
+  }
+
+  50% {
+    transform: translate3d(14px, -12px, 0);
+    opacity: 0.92;
+  }
+
+  100% {
+    transform: translate3d(-8px, 10px, 0);
+    opacity: 0.8;
+  }
+}
+
+@keyframes premium-trail-float-c {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(-10px, 14px, 0);
+  }
+
+  100% {
+    transform: translate3d(8px, -8px, 0);
+  }
+}
+
+@keyframes premium-trail-drift-low {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(10px, -6px, 0);
+  }
+
+  100% {
+    transform: translate3d(-10px, 4px, 0);
+  }
+}
+
+@keyframes premium-trail-drift-mid {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.54;
+  }
+
+  50% {
+    transform: translate3d(-12px, 6px, 0);
+    opacity: 0.62;
+  }
+
+  100% {
+    transform: translate3d(8px, -4px, 0);
+    opacity: 0.5;
+  }
+}
+
+@keyframes premium-horizon-breathe {
+  0%,
+  100% {
+    opacity: 0.54;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .premium-trail-glow-soft,
+  .premium-trail-glow-medium {
+    filter: blur(7px);
+  }
+}
