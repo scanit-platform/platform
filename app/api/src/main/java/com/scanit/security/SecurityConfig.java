@@ -1,6 +1,8 @@
 package com.scanit.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.h2.H2ConsoleProperties;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -46,6 +48,7 @@ public class SecurityConfig {
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
     private final RestAccessDeniedHandler restAccessDeniedHandler;
     private final CorsProperties corsProperties;
+    private final ObjectProvider<H2ConsoleProperties> h2ConsolePropertiesProvider;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -59,13 +62,18 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(restAuthenticationEntryPoint)
-                        .accessDeniedHandler(restAccessDeniedHandler))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(PathRequest.toH2Console()).permitAll()
-                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .anyRequest()
-                        .authenticated())
+                        .accessDeniedHandler(restAccessDeniedHandler));
+
+        http.authorizeHttpRequests(auth -> {
+            auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+            if (h2ConsolePropertiesProvider.getIfAvailable() != null) {
+                auth.requestMatchers(PathRequest.toH2Console()).permitAll();
+            }
+            auth.requestMatchers(PUBLIC_ENDPOINTS).permitAll();
+            auth.anyRequest().authenticated();
+        });
+
+        http
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

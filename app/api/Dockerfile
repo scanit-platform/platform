@@ -5,7 +5,7 @@ COPY pom.xml checkstyle.xml suppressions.xml lombok.config ./
 RUN mvn -B -DskipTests dependency:go-offline
 
 COPY src ./src
-RUN mvn -B -DskipTests clean package
+RUN mvn -B clean verify
 
 FROM eclipse-temurin:25
 WORKDIR /app

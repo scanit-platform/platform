@@ -10,7 +10,7 @@
 	</parent>
 
 	<groupId>com.ct5221</groupId>
-	<artifactId>backend</artifactId>
+	<artifactId>api</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
 	<name>ScanIt Platform</name>
