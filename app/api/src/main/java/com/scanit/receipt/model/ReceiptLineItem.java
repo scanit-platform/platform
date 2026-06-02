@@ -1,6 +1,7 @@
-package com.scanit.receipt;
+package com.scanit.receipt.model;
 
 import com.scanit.budget.BudgetCategory;
+
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 

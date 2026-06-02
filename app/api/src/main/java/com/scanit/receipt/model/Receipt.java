@@ -1,11 +1,9 @@
-package com.scanit.receipt;
+package com.scanit.receipt.model;
 
 import com.scanit.user.model.User2;
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
