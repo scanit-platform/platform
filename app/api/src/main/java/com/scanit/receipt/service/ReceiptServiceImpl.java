@@ -3,24 +3,24 @@ package com.scanit.receipt.service;
 import com.scanit.receipt.model.Receipt;
 import com.scanit.receipt.dto.ReceiptDTO;
 import java.util.Optional;
-import com.scanit.user.repository.User2Repository;
 import org.springframework.stereotype.Service;
-import lombok.RequiredArgsConstructor;
 import com.scanit.receipt.repository.ReceiptRepository;
 import com.scanit.receipt.mapper.ReceiptMapper;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class ReceiptServiceImpl implements ReceiptService {
     private final ReceiptRepository receiptRepository;
     private final ReceiptMapper receiptMapper;
-    private final User2Repository user2Repository;
+
+    public ReceiptServiceImpl(ReceiptRepository receiptRepository, ReceiptMapper receiptMapper) {
+        this.receiptRepository = receiptRepository;
+        this.receiptMapper = receiptMapper;
+    }
 
     @Override
     public ReceiptDTO save(ReceiptDTO dto) {
         Receipt receipt = receiptMapper.toEntity(dto);
-        user2Repository.findById(dto.userId()).ifPresent(receipt::setUser);
         Receipt savedReceipt = receiptRepository.save(receipt);
         return receiptMapper.toDTO(savedReceipt);
     }
