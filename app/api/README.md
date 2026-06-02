@@ -84,8 +84,8 @@ mvn spring-boot:run
 For a packaged run:
 
 ```powershell
-mvn clean package
-java -jar target/backend-0.0.1-SNAPSHOT.jar
+mvn clean verify
+java -jar target/api-0.0.1-SNAPSHOT.jar
 ```
 
 ### Required PostgreSQL environment variables
