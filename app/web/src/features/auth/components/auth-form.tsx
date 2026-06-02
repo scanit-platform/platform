@@ -17,8 +17,6 @@ type AuthFormProps = {
 
 export function AuthForm({ providerNotice }: AuthFormProps) {
   const [mode, setMode] = useState<AuthMode>("signup");
-  const [countryCode, setCountryCode] = useState("+1");
-  const [localPhone, setLocalPhone] = useState("");
   const [state, formAction, pending] = useActionState(
     submitAuthForm,
     initialAuthState,
@@ -29,38 +27,8 @@ export function AuthForm({ providerNotice }: AuthFormProps) {
     mode === "signup"
       ? "Enter your details to get started."
       : "Sign in to continue where you left off.";
-  const countryOptions = [
-    { code: "+1", flag: "🇺🇸", label: "United States" },
-    { code: "+44", flag: "🇬🇧", label: "United Kingdom" },
-    { code: "+353", flag: "🇮🇪", label: "Ireland" },
-    { code: "+61", flag: "🇦🇺", label: "Australia" },
-    { code: "+49", flag: "🇩🇪", label: "Germany" },
-  ] as const;
   const socialLinkClasses =
     "inline-flex h-12 w-full items-center justify-center gap-2.5 rounded-full border border-white/[0.08] bg-[linear-gradient(180deg,rgba(40,42,48,0.54)_0%,rgba(31,33,39,0.48)_100%)] px-5 text-[0.8125rem] font-medium text-white/78 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-all duration-300 hover:border-white/[0.12] hover:bg-[linear-gradient(180deg,rgba(44,46,52,0.62)_0%,rgba(34,36,42,0.56)_100%)]";
-  const selectedCountry =
-    countryOptions.find((option) => option.code === countryCode) ??
-    countryOptions[0];
-
-  function formatLocalPhone(rawValue: string) {
-    const digitsOnly = rawValue.replace(/\D/g, "").slice(0, 12);
-
-    if (digitsOnly.length <= 2) {
-      return digitsOnly;
-    }
-
-    const groups = [digitsOnly.slice(0, 2)];
-    let cursor = 2;
-
-    while (cursor < digitsOnly.length) {
-      const remaining = digitsOnly.length - cursor;
-      const nextGroupLength = remaining > 4 ? 3 : remaining;
-      groups.push(digitsOnly.slice(cursor, cursor + nextGroupLength));
-      cursor += nextGroupLength;
-    }
-
-    return groups.join(" ");
-  }
 
   return (
     <div className="flex min-h-122 flex-col">
@@ -108,25 +76,15 @@ export function AuthForm({ providerNotice }: AuthFormProps) {
         <div className="min-h-47 space-y-2">
           {mode === "signup" ? (
             <>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div className="animate-[auth-field-enter_320ms_cubic-bezier(0.16,1,0.3,1)]">
-                  <GlassInput
-                    autoComplete="given-name"
-                    error={state.fieldErrors.firstName}
-                    name="firstName"
-                    placeholder="First name"
-                  />
-                </div>
-                <div className="animate-[auth-field-enter_360ms_cubic-bezier(0.16,1,0.3,1)]">
-                  <GlassInput
-                    autoComplete="family-name"
-                    error={state.fieldErrors.lastName}
-                    name="lastName"
-                    placeholder="Last name"
-                  />
-                </div>
+              <div className="animate-[auth-field-enter_320ms_cubic-bezier(0.16,1,0.3,1)]">
+                <GlassInput
+                  autoComplete="name"
+                  error={state.fieldErrors.name}
+                  name="name"
+                  placeholder="Full name"
+                />
               </div>
-              <div className="animate-[auth-field-enter_400ms_cubic-bezier(0.16,1,0.3,1)]">
+              <div className="animate-[auth-field-enter_360ms_cubic-bezier(0.16,1,0.3,1)]">
                 <GlassInput
                   autoComplete="email"
                   error={state.fieldErrors.email}
@@ -136,64 +94,14 @@ export function AuthForm({ providerNotice }: AuthFormProps) {
                   type="email"
                 />
               </div>
-              <div className="animate-[auth-field-enter_440ms_cubic-bezier(0.16,1,0.3,1)]">
-                <label className="block">
-                  <span className="sr-only">Phone number</span>
-                  <div className="grid grid-cols-[6.75rem_minmax(0,1fr)] gap-2">
-                    <div className="relative min-w-0">
-                      <select
-                        aria-label="Country code"
-                        className="auth-glass-field absolute inset-0 h-12 w-full appearance-none rounded-[0.9rem] opacity-0"
-                        name="countryCode"
-                        onChange={(event) => setCountryCode(event.target.value)}
-                        value={countryCode}
-                      >
-                        {countryOptions.map((option) => (
-                          <option
-                            key={option.code}
-                            value={option.code}
-                            className="bg-[#1b1d23] text-white"
-                          >
-                            {option.flag} {option.code}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center gap-2 text-[0.82rem] text-white/86">
-                        <span className="leading-none">
-                          {selectedCountry.flag}
-                        </span>
-                        <span className="tracking-[-0.01em]">
-                          {selectedCountry.code}
-                        </span>
-                      </div>
-                      <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white/42">
-                        <ChevronDownIcon />
-                      </div>
-                    </div>
-                    <input
-                      autoComplete="tel"
-                      className={`auth-glass-field h-12 w-full rounded-[0.9rem] px-4 text-[0.875rem] outline-none transition-all duration-300 placeholder:text-field-placeholder ${
-                        state.fieldErrors.phone
-                          ? "border-red-400/60 bg-red-500/4 focus:border-red-300/80"
-                          : ""
-                      }`}
-                      inputMode="tel"
-                      name="phone"
-                      onChange={(event) =>
-                        setLocalPhone(formatLocalPhone(event.target.value))
-                      }
-                      pattern="[0-9 ]*"
-                      placeholder="85 260 6799"
-                      type="text"
-                      value={localPhone}
-                    />
-                  </div>
-                  {state.fieldErrors.phone ? (
-                    <span className="mt-2 block text-[0.7rem] tracking-[0.01em] text-red-200/85">
-                      {state.fieldErrors.phone}
-                    </span>
-                  ) : null}
-                </label>
+              <div className="animate-[auth-field-enter_400ms_cubic-bezier(0.16,1,0.3,1)]">
+                <GlassInput
+                  autoComplete="new-password"
+                  error={state.fieldErrors.password}
+                  name="password"
+                  placeholder="Password"
+                  type="password"
+                />
               </div>
             </>
           ) : (
@@ -326,26 +234,6 @@ function CloseIcon() {
         stroke="currentColor"
         strokeLinecap="round"
         strokeWidth="1.8"
-      />
-    </svg>
-  );
-}
-
-function ChevronDownIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      height="6"
-      viewBox="0 0 10 6"
-      width="10"
-    >
-      <path
-        d="m1 1 4 4 4-4"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.2"
       />
     </svg>
   );
