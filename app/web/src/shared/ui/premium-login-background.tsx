@@ -142,17 +142,38 @@ export function PremiumLoginBackground({
         viewBox="0 0 1440 900"
       >
         <defs>
-          <radialGradient id={haloGradientId} cx="0" cy="0" r="1" gradientTransform="translate(1110 514) rotate(128) scale(456 352)" gradientUnits="userSpaceOnUse">
+          <radialGradient
+            id={haloGradientId}
+            cx="0"
+            cy="0"
+            r="1"
+            gradientTransform="translate(1110 514) rotate(128) scale(456 352)"
+            gradientUnits="userSpaceOnUse"
+          >
             <stop stopColor="rgba(89,162,255,0.12)" />
             <stop offset="0.32" stopColor="rgba(106,111,255,0.08)" />
             <stop offset="0.66" stopColor="rgba(178,96,255,0.05)" />
             <stop offset="1" stopColor="rgba(0,0,0,0)" />
           </radialGradient>
-          <radialGradient id={horizonGlowId} cx="0" cy="0" r="1" gradientTransform="translate(744 585) rotate(90) scale(34 600)" gradientUnits="userSpaceOnUse">
+          <radialGradient
+            id={horizonGlowId}
+            cx="0"
+            cy="0"
+            r="1"
+            gradientTransform="translate(744 585) rotate(90) scale(34 600)"
+            gradientUnits="userSpaceOnUse"
+          >
             <stop stopColor="rgba(212,230,255,0.12)" />
             <stop offset="1" stopColor="rgba(160,190,255,0)" />
           </radialGradient>
-          <linearGradient id={horizonGradientId} x1="150" x2="1332" y1="0" y2="0" gradientUnits="userSpaceOnUse">
+          <linearGradient
+            id={horizonGradientId}
+            x1="150"
+            x2="1332"
+            y1="0"
+            y2="0"
+            gradientUnits="userSpaceOnUse"
+          >
             <stop offset="0" stopColor="rgba(126,172,255,0)" />
             <stop offset="0.18" stopColor="rgba(152,200,255,0.08)" />
             <stop offset="0.46" stopColor="rgba(208,233,255,0.28)" />
@@ -161,10 +182,22 @@ export function PremiumLoginBackground({
             <stop offset="0.82" stopColor="rgba(152,200,255,0.08)" />
             <stop offset="1" stopColor="rgba(126,172,255,0)" />
           </linearGradient>
-          <filter id={sparkGlowStrongId} x="-200%" y="-200%" width="400%" height="400%">
+          <filter
+            id={sparkGlowStrongId}
+            x="-200%"
+            y="-200%"
+            width="400%"
+            height="400%"
+          >
             <feGaussianBlur stdDeviation="5.5" />
           </filter>
-          <filter id={sparkGlowSoftId} x="-200%" y="-200%" width="400%" height="400%">
+          <filter
+            id={sparkGlowSoftId}
+            x="-200%"
+            y="-200%"
+            width="400%"
+            height="400%"
+          >
             <feGaussianBlur stdDeviation="3.5" />
           </filter>
           {trailGradientIds.map((id, index) => (
@@ -195,12 +228,24 @@ export function PremiumLoginBackground({
               <stop offset="1" stopColor="rgba(255,138,92,0)" />
             </linearGradient>
           ))}
-          <filter id={`${grainMaskId}-blur`} x="-20%" y="-20%" width="140%" height="140%">
+          <filter
+            id={`${grainMaskId}-blur`}
+            x="-20%"
+            y="-20%"
+            width="140%"
+            height="140%"
+          >
             <feGaussianBlur stdDeviation="6" />
           </filter>
         </defs>
 
-        <rect x="0" y="0" width="1440" height="900" fill={`url(#${haloGradientId})`} />
+        <rect
+          x="0"
+          y="0"
+          width="1440"
+          height="900"
+          fill={`url(#${haloGradientId})`}
+        />
 
         <g className="opacity-80">
           {rightTrails.map((trail, index) => (
@@ -246,7 +291,7 @@ export function PremiumLoginBackground({
           ))}
         </g>
 
-        <g className="[animation:premium-horizon-breathe_14s_ease-in-out_infinite]">
+        <g className="animate-[premium-horizon-breathe_14s_ease-in-out_infinite]">
           <ellipse
             cx="744"
             cy="585"
@@ -269,7 +314,7 @@ export function PremiumLoginBackground({
         className="absolute inset-0 opacity-[0.018] mix-blend-screen"
         style={{
           backgroundImage:
-            'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 240 240\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.82\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\' opacity=\'0.86\'/%3E%3C/svg%3E")',
+            "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.86'/%3E%3C/svg%3E\")",
           backgroundRepeat: "repeat",
         }}
       />

@@ -1,22 +1,8 @@
-import type { Metadata } from "next";
-import { Commissioner, Cormorant_Garamond } from "next/font/google";
-import "./globals.css";
+import { dmSans, spaceGrotesk } from "@/src/app/fonts";
+import { metadata as appMetadata } from "@/src/app/metadata";
+import "@/src/app/styles/globals.css";
 
-const commissioner = Commissioner({
-  subsets: ["latin"],
-  variable: "--font-commissioner",
-});
-
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
-  variable: "--font-cormorant",
-  weight: ["500", "600", "700"],
-});
-
-export const metadata: Metadata = {
-  title: "Modern Authentication Experience",
-  description: "A cinematic authentication experience built with Next.js 16.",
-};
+export const metadata = appMetadata;
 
 export default function RootLayout({
   children,
@@ -26,7 +12,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${commissioner.variable} ${cormorant.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${spaceGrotesk.variable} h-full antialiased`}
     >
       <body className="min-h-full">{children}</body>
     </html>
