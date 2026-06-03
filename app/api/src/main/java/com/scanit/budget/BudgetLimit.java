@@ -1,8 +1,7 @@
 package com.scanit.budget;
 
-import com.scanit.user.model.User2;
+import com.scanit.user.model.User;
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 import java.time.YearMonth;
 
@@ -15,7 +14,7 @@ public class BudgetLimit {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private User2 user;
+    private User user;
 
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
@@ -25,5 +24,5 @@ public class BudgetLimit {
     private BigDecimal monthlyLimit;
 
     @Column(nullable = false)
-    private YearMonth period;
+    private String period;
 }

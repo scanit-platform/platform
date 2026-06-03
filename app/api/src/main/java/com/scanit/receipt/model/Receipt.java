@@ -1,6 +1,6 @@
 package com.scanit.receipt.model;
 
-import com.scanit.user.model.User2;
+import com.scanit.user.model.User;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,5 +31,5 @@ public class Receipt {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User2 user;
+    private User user;
 }
