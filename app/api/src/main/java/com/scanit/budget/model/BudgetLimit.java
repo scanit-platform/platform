@@ -1,12 +1,20 @@
-package com.scanit.budget;
+package com.scanit.budget.model;
 
 import com.scanit.user.model.User;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.math.BigDecimal;
-import java.time.YearMonth;
 
 @Entity
 @Table(name = "budget_limit")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class BudgetLimit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
