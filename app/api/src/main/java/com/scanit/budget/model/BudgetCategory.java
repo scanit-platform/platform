@@ -1,4 +1,4 @@
-package com.scanit.budget;
+package com.scanit.budget.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
