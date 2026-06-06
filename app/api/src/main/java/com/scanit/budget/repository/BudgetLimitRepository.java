@@ -8,5 +8,7 @@ import java.util.Optional;
 
 public interface BudgetLimitRepository extends JpaRepository<BudgetLimit, Long> {
     List<BudgetLimit> findByUserId(Long userId);
-    Optional<BudgetLimit> findByUserIdAndBudgetCategoryIdAndPeriod(Long userId, Long categoryId, String period);
+    List<BudgetLimit> findByUserIdAndPeriod(Long userId, String period);
+    List<BudgetLimit> findByUserIdAndBudgetCategoryId(Long userId, Long categoryId);
+    List<BudgetLimit> findByUserIdAndBudgetCategoryIdAndPeriod(Long userId, Long categoryId, String period);
 }
