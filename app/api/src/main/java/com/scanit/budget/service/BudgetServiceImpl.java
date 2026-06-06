@@ -2,6 +2,7 @@ package com.scanit.budget.service;
 
 import com.scanit.budget.dto.BudgetLimitRequestDTO;
 import com.scanit.budget.dto.BudgetLimitResponseDTO;
+import com.scanit.budget.exception.BudgetNotFoundException;
 import com.scanit.budget.model.BudgetCategory;
 import com.scanit.budget.model.BudgetLimit;
 import com.scanit.budget.repository.BudgetCategoryRepository;
@@ -30,8 +31,9 @@ public class BudgetServiceImpl implements BudgetService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<BudgetLimit> findById(Long id) {
-        return budgetLimitRepository.findById(id);
+    public BudgetLimit findById(Long id) {
+        return budgetLimitRepository.findById(id)
+                .orElseThrow(() -> new BudgetNotFoundException(id));
     }
 
     @Override

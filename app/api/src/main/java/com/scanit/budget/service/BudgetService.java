@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface BudgetService {
     Iterable<BudgetLimit>findAll();
-    Optional<BudgetLimit> findById(Long id);
+    BudgetLimit findById(Long id);
     List<BudgetLimit> search(Long userId, Long categoryId, String period);
     Optional<BudgetCategory> findBudgetCategory(String category);
     BudgetLimitResponseDTO saveBudgetLimit(BudgetLimitRequestDTO dto);
