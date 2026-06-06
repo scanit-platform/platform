@@ -2,10 +2,14 @@ package com.scanit.receipt.service;
 
 import com.scanit.receipt.model.Receipt;
 import com.scanit.receipt.dto.ReceiptDTO;
+
+import java.time.LocalDate;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import com.scanit.receipt.repository.ReceiptRepository;
 import com.scanit.receipt.mapper.ReceiptMapper;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -26,14 +30,25 @@ public class ReceiptServiceImpl implements ReceiptService {
     }
 
     @Override
-    public Optional<Receipt> deleteById(Long id) {
-        Optional<Receipt> receipt = receiptRepository.findById(id);
-        receipt.ifPresent(receiptRepository::delete);
-        return receipt;
+    @Transactional(readOnly = true)
+    public List<Receipt> search(Long userId, String vendorName, LocalDate  transactionDate) {
+        if (userId != null && vendorName != null && transactionDate != null) {
+            return  receiptRepository.findByUserIdAndVendorNameAndTransactionDate(userId, vendorName, transactionDate);
+        }
+
+        if (userId == null) {
+            throw new IllegalArgumentException("userId is required");
+        }
+
+        if (vendorName != null) {
+            return receiptRepository.findByUserIdAndVendorName(userId, vendorName);
+        }
+
+        return receiptRepository.findByUserId(userId);
     }
 
     @Override
-    public List<Receipt> findAll() {
+    public Iterable<Receipt> findAll() {
         return (List<Receipt>) receiptRepository.findAll();
     }
 

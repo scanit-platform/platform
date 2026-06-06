@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/budget")
@@ -49,10 +48,7 @@ public class BudgetController {
 
     @GetMapping("/{id}")
     public ResponseEntity<BudgetLimitResponseDTO> getById(@PathVariable Long id) {
-        return budgetService.findById(id)
-                .map(this::toDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(toDTO(budgetService.findById(id)));
     }
 
     @PutMapping("/{id}")
