@@ -12,5 +12,8 @@ public interface ReceiptMapper {
     ReceiptDTO toDTO(Receipt receipt);
 
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "ocrStatus", ignore = true)
+    @Mapping(target = "imageUrl", ignore = true)
+    @Mapping(target = "lineItems", ignore = true)
     Receipt toEntity(ReceiptDTO dto);
 }

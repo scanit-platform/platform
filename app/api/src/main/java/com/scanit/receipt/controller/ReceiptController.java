@@ -25,7 +25,9 @@ public class ReceiptController {
                 receipt.getTransactionAmount(),
                 receipt.getTotalAmount(),
                 receipt.getTransactionDate(),
-                receipt.getUserId().getId()
+                receipt.getImageUrl(),
+                receipt.getOcrStatus(),
+                receipt.getUser().getId()
         );
     }
 
