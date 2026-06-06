@@ -5,6 +5,9 @@ import com.scanit.receipt.dto.ReceiptDTO;
 
 import java.time.LocalDate;
 import java.util.Optional;
+
+import com.scanit.user.model.User;
+import com.scanit.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import com.scanit.receipt.repository.ReceiptRepository;
 import com.scanit.receipt.mapper.ReceiptMapper;
@@ -16,15 +19,20 @@ import java.util.List;
 public class ReceiptServiceImpl implements ReceiptService {
     private final ReceiptRepository receiptRepository;
     private final ReceiptMapper receiptMapper;
+    private final UserRepository userRepository;
 
-    public ReceiptServiceImpl(ReceiptRepository receiptRepository, ReceiptMapper receiptMapper) {
+    public ReceiptServiceImpl(ReceiptRepository receiptRepository, ReceiptMapper receiptMapper,  UserRepository userRepository) {
         this.receiptRepository = receiptRepository;
         this.receiptMapper = receiptMapper;
+        this.userRepository = userRepository;
     }
 
     @Override
     public ReceiptDTO save(ReceiptDTO dto) {
         Receipt receipt = receiptMapper.toEntity(dto);
+        User user = userRepository.findById(dto.userId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        receipt.setUser(user);
         Receipt savedReceipt = receiptRepository.save(receipt);
         return receiptMapper.toDTO(savedReceipt);
     }
