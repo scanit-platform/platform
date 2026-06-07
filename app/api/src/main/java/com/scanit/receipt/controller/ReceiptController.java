@@ -74,7 +74,7 @@ public class ReceiptController {
         List<Receipt> receipts = receiptService.search(userId, vendorName, transactionDate);
         List<ReceiptDTO> dtos =  new ArrayList<>();
 
-        for (Receipt receipt : receiptService.search(userId, vendorName, transactionDate)) {
+        for (Receipt receipt : receipts) { //uses the receipts variable defined above.
             dtos.add(toDTO(receipt));
         }
 
