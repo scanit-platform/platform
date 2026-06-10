@@ -3,6 +3,7 @@ package com.scanit.auth.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Data
@@ -15,6 +16,8 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank(message = "Password cannot be empty")
-    @Size(min = 6, message = "Password must contain at least 6 characters")
+    @Size(min = 8, message = "Password must contain at least 8 characters")
+    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$", message = "Password must contain at least 1 letter and 1 number"
+)
     private String password;
 }

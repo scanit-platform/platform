@@ -94,7 +94,7 @@ export function AuthForm({ initialMode = "signup" }: AuthFormProps) {
                   error={state.fieldErrors.password}
                   label="Password"
                   name="password"
-                  placeholder="At least 6 characters"
+                  placeholder="At least 8 characters, 1 letter and 1 number"
                   type="password"
                 />
               </div>

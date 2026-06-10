@@ -46,8 +46,16 @@ export async function submitAuthForm(
       fieldErrors.name = "Name is required.";
     }
 
-    if (password && password.length < 6) {
-      fieldErrors.password = "Password must be at least 6 characters.";
+    if (password && password.length < 8) {
+      fieldErrors.password = "Password must be at least 8 characters.";
+    }
+
+    if (password && !/[a-zA-Z]/.test(password)) {
+      fieldErrors.password = "Password must contain at least 1 letter.";
+    }
+
+    if (password && !/\d/.test(password)) {
+      fieldErrors.password = "Password must contain at least 1 number.";
     }
   }
 
