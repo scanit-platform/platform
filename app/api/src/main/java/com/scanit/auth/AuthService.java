@@ -4,6 +4,7 @@ import com.scanit.auth.dto.AuthRequest;
 import com.scanit.auth.dto.AuthResponse;
 import com.scanit.auth.dto.RegisterRequest;
 import com.scanit.exception.InvalidCredentialsException;
+import com.scanit.exception.PasswordStrengthException;
 import com.scanit.security.JwtService;
 import com.scanit.security.UserPrincipal;
 import com.scanit.user.dto.UserRequestDto;
@@ -26,13 +27,19 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        UserRequestDto userRequestDto = new UserRequestDto();
-        userRequestDto.setName(request.getName());
-        userRequestDto.setEmail(request.getEmail());
-        userRequestDto.setPassword(request.getPassword());
+        try{
+            UserRequestDto userRequestDto = new UserRequestDto();
+            userRequestDto.setName(request.getName());
+            userRequestDto.setEmail(request.getEmail());
+            userRequestDto.setPassword(request.getPassword());
 
-        UserResponseDto user = userService.registerUser(userRequestDto);
-        return buildAuthResponse(user.getId(), user.getName(), user.getEmail());
+            UserResponseDto user = userService.registerUser(userRequestDto);
+            return buildAuthResponse(user.getId(), user.getName(), user.getEmail());
+        } catch (PasswordStrengthException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new RuntimeException("Registration failed: " + ex.getMessage(), ex);
+        }
     }
 
     public AuthResponse login(AuthRequest request) {

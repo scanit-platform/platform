@@ -6,6 +6,7 @@ import lombok.Data;
 
 @Data
 public class AuthRequest {
+
     @NotBlank(message = "Email cannot be empty")
     @Email(message = "Invalid email address")
     private String email;

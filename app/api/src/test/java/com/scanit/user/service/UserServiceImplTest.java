@@ -1,5 +1,6 @@
 package com.scanit.user.service;
 
+import com.scanit.exception.PasswordStrengthException;
 import com.scanit.exception.UserAlreadyExistsException;
 import com.scanit.user.dto.UserRequestDto;
 import com.scanit.user.dto.UserResponseDto;
@@ -85,5 +86,41 @@ class UserServiceImplTest {
         dto.setEmail(email);
         dto.setPassword(password);
         return dto;
+    }
+
+    @Test
+    void shouldThrowWhenPasswordBelowMinimumLength() {
+        UserRequestDto request = userRequestDto("Bob", "bob@example.com", "shor2t");
+        when(userRepository.existsByEmail("bob@example.com")).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.registerUser(request))
+                .isInstanceOf(PasswordStrengthException.class)
+                .hasMessage("Password must be at least 8 characters.");
+
+        verifyNoInteractions(passwordEncoder, userMapper);
+    }
+
+    @Test
+    void shouldThrowWhenPasswordMissingLetter() {
+        UserRequestDto request = userRequestDto("Charlie", "charlie@example.com", "12345678");
+        when(userRepository.existsByEmail("charlie@example.com")).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.registerUser(request))
+                .isInstanceOf(PasswordStrengthException.class)
+                .hasMessage("Password must contain at least 1 letter.");
+
+        verifyNoInteractions(passwordEncoder, userMapper);
+    }
+
+    @Test
+    void shouldThrowWhenPasswordMissingNumber() {
+        UserRequestDto request = userRequestDto("Dave", "dave@example.com", "abcdefgh");
+        when(userRepository.existsByEmail("dave@example.com")).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.registerUser(request))
+                .isInstanceOf(PasswordStrengthException.class)
+                .hasMessage("Password must contain at least 1 number.");
+
+        verifyNoInteractions(passwordEncoder, userMapper);
     }
 }

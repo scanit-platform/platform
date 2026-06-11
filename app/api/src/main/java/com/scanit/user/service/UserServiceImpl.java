@@ -1,5 +1,6 @@
 package com.scanit.user.service;
 
+import com.scanit.exception.PasswordStrengthException;
 import com.scanit.exception.UserAlreadyExistsException;
 import com.scanit.user.dto.UserRequestDto;
 import com.scanit.user.dto.UserResponseDto;
@@ -24,7 +25,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponseDto registerUser(UserRequestDto user) {
         validateEmailUniqueness(user.getEmail());
-
+        validatePasswordStrength(user.getPassword());
         User newUser = new User(
                 null,
                 user.getName(),
@@ -37,6 +38,18 @@ public class UserServiceImpl implements UserService {
     private void validateEmailUniqueness(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new UserAlreadyExistsException("User with email " + email + " already exists");
+        }
+    }
+
+    private void validatePasswordStrength(String password) {
+        if (password.length() < 8) {
+            throw new PasswordStrengthException("Password must be at least 8 characters.");
+        }
+        if (!password.matches("^(?=.*[a-zA-Z]).+$")) {
+            throw new PasswordStrengthException("Password must contain at least 1 letter.");
+        }
+        if (!password.matches("^(?=.*\\d).+$")) {
+            throw new PasswordStrengthException("Password must contain at least 1 number.");
         }
     }
 }
