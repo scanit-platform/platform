@@ -5,9 +5,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
 
 @Service
 @RequiredArgsConstructor
@@ -35,15 +39,29 @@ public class JwtService {
         return expiration == null ? null : expiration.toInstant();
     }
 
+    public LocalDateTime extractIssuedAt(String token) {
+        Date issuedAt = extractAllClaims(token).getIssuedAt();
+        return issuedAt == null ? null : LocalDateTime.ofInstant(issuedAt.toInstant(), ZoneId.systemDefault());
+    }
+
     public boolean isTokenValid(String token, UserPrincipal userDetails) {
         String email = extractEmail(token);
         Long userId = extractUserId(token);
         Instant expiration = extractExpiration(token);
+        LocalDateTime issuedAt = extractIssuedAt(token);
+        LocalDateTime passwordChangedAt = userDetails.getPasswordChangedAt();
+
+        LocalDateTime normalizedPasswordChangedAt = passwordChangedAt == null
+                ? null
+                : passwordChangedAt.truncatedTo(ChronoUnit.SECONDS);
 
         return userDetails.getUsername().equals(email)
                 && userDetails.getId().equals(userId)
                 && expiration != null
-                && expiration.isAfter(Instant.now());
+                && expiration.isAfter(Instant.now())
+                && issuedAt != null
+                && normalizedPasswordChangedAt != null
+                && !issuedAt.isBefore(normalizedPasswordChangedAt);
     }
 
     private Claims extractAllClaims(String token) {

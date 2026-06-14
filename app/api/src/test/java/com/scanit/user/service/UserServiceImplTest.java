@@ -44,7 +44,10 @@ class UserServiceImplTest {
     @Test
     void shouldRegisterUserAndEncodePassword() {
         UserRequestDto request = userRequestDto("Alice", "alice@example.com", "password123");
-        User savedUser = new User(1L, "Alice", "alice@example.com", "encoded-password", LocalDateTime.now());
+
+        LocalDateTime now = LocalDateTime.now();
+        User savedUser = new User(1L, "Alice", "alice@example.com", "encoded-password", now, now);
+
         UserResponseDto response = new UserResponseDto(1L, "Alice", "alice@example.com");
 
         when(userRepository.existsByEmail("alice@example.com")).thenReturn(false);
@@ -64,6 +67,7 @@ class UserServiceImplTest {
         assertThat(persistedUser.getEmail()).isEqualTo("alice@example.com");
         assertThat(persistedUser.getPassword()).isEqualTo("encoded-password");
         assertThat(persistedUser.getCreatedAt()).isNotNull();
+        assertThat(persistedUser.getPasswordChangedAt()).isNotNull();
     }
 
     @Test

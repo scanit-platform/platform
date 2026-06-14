@@ -34,6 +34,7 @@ public class SecurityConfig {
             "/error",
             "/auth/register",
             "/auth/login",
+            "/auth/reset-password",
             "/swagger-ui.html",
             "/swagger-ui/**",
             "/v3/api-docs",

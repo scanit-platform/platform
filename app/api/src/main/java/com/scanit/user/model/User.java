@@ -38,6 +38,9 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "password_changed_at", nullable = false)
+    private LocalDateTime passwordChangedAt;
+
     // Entity identity is database-generated; avoid equality by mutable business fields.
     @Override
     public final boolean equals(Object o) {
@@ -56,3 +59,4 @@ public class User {
         return Hibernate.getClass(this).hashCode();
     }
 }
+

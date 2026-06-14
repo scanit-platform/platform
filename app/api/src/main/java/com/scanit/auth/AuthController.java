@@ -2,7 +2,9 @@ package com.scanit.auth;
 
 import com.scanit.auth.dto.AuthRequest;
 import com.scanit.auth.dto.AuthResponse;
+import com.scanit.auth.dto.MessageResponse;
 import com.scanit.auth.dto.RegisterRequest;
+import com.scanit.auth.dto.ResetPasswordRequest;
 import com.scanit.security.UserPrincipal;
 import com.scanit.user.dto.UserResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,6 +57,19 @@ public class AuthController {
         return ResponseEntity.ok()
                 .cacheControl(CacheControl.noStore())
                 .body(authService.login(request));
+    }
+
+    @PostMapping("/reset-password")
+    @SecurityRequirements
+    @Operation(summary = "Reset password using a valid password reset token",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Password reset successful"),
+                    @ApiResponse(responseCode = "400", description = "Invalid or expired reset token")
+            })
+    public ResponseEntity<MessageResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .body(authService.resetPassword(request));
     }
 
     @GetMapping("/me")

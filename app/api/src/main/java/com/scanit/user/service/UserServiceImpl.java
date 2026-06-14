@@ -25,12 +25,16 @@ public class UserServiceImpl implements UserService {
     public UserResponseDto registerUser(UserRequestDto user) {
         validateEmailUniqueness(user.getEmail());
 
+        LocalDateTime now = LocalDateTime.now();
+
         User newUser = new User(
                 null,
                 user.getName(),
                 user.getEmail(),
                 passwordEncoder.encode(user.getPassword()),
-                LocalDateTime.now());
+                now,
+                now);
+
         return userMapper.toUserResponseDto(userRepository.save(newUser));
     }
 
