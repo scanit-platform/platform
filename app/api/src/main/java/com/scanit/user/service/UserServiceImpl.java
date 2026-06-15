@@ -30,7 +30,8 @@ public class UserServiceImpl implements UserService {
                 user.getName(),
                 user.getEmail(),
                 passwordEncoder.encode(user.getPassword()),
-                LocalDateTime.now());
+                LocalDateTime.now(),
+                null);
         return userMapper.toUserResponseDto(userRepository.save(newUser));
     }
 
