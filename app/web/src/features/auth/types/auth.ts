@@ -1,7 +1,19 @@
 export type RegisterRequest = {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
+  confirmPassword: string;
+};
+
+export type RegistrationResponse = {
+  email: string;
+  status: string;
+  message: string;
+};
+
+export type ResendVerificationRequest = {
+  email: string;
 };
 
 export type AuthRequest = {
