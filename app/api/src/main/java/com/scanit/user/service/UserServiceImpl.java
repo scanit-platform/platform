@@ -5,6 +5,7 @@ import com.scanit.user.dto.UserRequestDto;
 import com.scanit.user.dto.UserResponseDto;
 import com.scanit.user.mapper.UserMapper;
 import com.scanit.user.model.User;
+import com.scanit.user.model.UserStatus;
 import com.scanit.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,10 +29,12 @@ public class UserServiceImpl implements UserService {
         User newUser = new User(
                 null,
                 user.getName(),
+                user.getName(),
+                "User",
                 user.getEmail(),
                 passwordEncoder.encode(user.getPassword()),
-                LocalDateTime.now(),
-                null);
+                UserStatus.ACTIVE,
+                LocalDateTime.now());
         return userMapper.toUserResponseDto(userRepository.save(newUser));
     }
 

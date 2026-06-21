@@ -12,9 +12,13 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function isStrongEnoughPassword(password: string) {
+  return password.length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
+}
+
 export async function submitAuthForm(
-  _previousState: AuthActionState,
-  formData: FormData,
+    _previousState: AuthActionState,
+    formData: FormData,
 ): Promise<AuthActionState> {
   const mode = formData.get("mode");
 
@@ -25,9 +29,11 @@ export async function submitAuthForm(
     };
   }
 
+  const firstName = String(formData.get("firstName") ?? "").trim();
+  const lastName = String(formData.get("lastName") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "").trim();
-  const name = String(formData.get("name") ?? "").trim();
+  const confirmPassword = String(formData.get("confirmPassword") ?? "").trim();
 
   const fieldErrors: AuthActionState["fieldErrors"] = {};
 
@@ -42,12 +48,25 @@ export async function submitAuthForm(
   }
 
   if (mode === "signup") {
-    if (!name) {
-      fieldErrors.name = "Name is required.";
+    if (!firstName) {
+      fieldErrors.firstName = "First name is required.";
     }
 
-    if (password && password.length < 6) {
-      fieldErrors.password = "Password must be at least 6 characters.";
+    if (!lastName) {
+      fieldErrors.lastName = "Last name is required.";
+    }
+
+    if (!confirmPassword) {
+      fieldErrors.confirmPassword = "Confirm password is required.";
+    }
+
+    if (password && !isStrongEnoughPassword(password)) {
+      fieldErrors.password =
+          "Password must be at least 8 characters and include one letter and one number.";
+    }
+
+    if (password && confirmPassword && password !== confirmPassword) {
+      fieldErrors.confirmPassword = "Passwords do not match.";
     }
   }
 
@@ -58,24 +77,37 @@ export async function submitAuthForm(
     };
   }
 
-  try {
-    const response =
-      mode === "signup"
-        ? await register({ name, email, password })
-        : await login({ email, password });
-    const tokenErrorMessage = await storeAuthToken(response);
+  let redirectPath = "";
 
-    if (tokenErrorMessage) {
-      return {
-        ...initialAuthState,
-        message: tokenErrorMessage,
-      };
+  try {
+    if (mode === "signup") {
+      await register({
+        firstName,
+        lastName,
+        email,
+        password,
+        confirmPassword,
+      });
+
+      redirectPath = `/check-email?email=${encodeURIComponent(email)}`;
+    } else {
+      const response = await login({ email, password });
+      const tokenErrorMessage = await storeAuthToken(response);
+
+      if (tokenErrorMessage) {
+        return {
+          ...initialAuthState,
+          message: tokenErrorMessage,
+        };
+      }
+
+      redirectPath = "/dashboard?mode=signin";
     }
   } catch (error) {
     const message =
-      error instanceof Error
-        ? error.message
-        : "Authentication failed. Try again.";
+        error instanceof Error
+            ? error.message
+            : "Authentication failed. Try again.";
 
     return {
       ...initialAuthState,
@@ -83,5 +115,5 @@ export async function submitAuthForm(
     };
   }
 
-  redirect(`/dashboard?mode=${mode}`);
+  redirect(redirectPath);
 }
