@@ -25,7 +25,9 @@ public class EmailServiceImpl implements EmailService {
         message.setTo(toEmail);
         message.setSubject("Password Reset Request");
         message.setText("To reset your password, click the link below." + resetUrl);
-
-        emailSender.send(message);
+//        use in production
+//        emailSender.send(message);
+//      use in dev
+        System.out.println("RESET URL: " + resetUrl);
     }
 }

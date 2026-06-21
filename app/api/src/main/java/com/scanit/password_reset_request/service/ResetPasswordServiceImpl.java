@@ -77,7 +77,7 @@ public class ResetPasswordServiceImpl implements  ResetPasswordService {
 
         User user = resetRequest.getUser();
         user.setPassword(passwordEncoder.encode(dto.password()));
-        user.setPasswordChangedAt(LocalDateTime.now());
+//        user.setPasswordChangedAt(LocalDateTime.now());
 
         userRepository.save(user);
         resetRequest.markAsUsed();
