@@ -1,5 +1,6 @@
 package com.scanit.security;
 
+import com.scanit.auth.repository.EmailVerificationTokenRepository;
 import com.scanit.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = {
@@ -31,8 +33,12 @@ class SecurityProdProfileIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private EmailVerificationTokenRepository emailVerificationTokenRepository;
+
     @BeforeEach
     void cleanDatabase() {
+        emailVerificationTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -47,15 +53,20 @@ class SecurityProdProfileIntegrationTest {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registerPayload("prod@example.com")))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.email").value("prod@example.com"))
+                .andExpect(jsonPath("$.status").value("pending_verification"))
+                .andExpect(jsonPath("$.token").doesNotExist());
     }
 
     private String registerPayload(String email) {
         return (
                 "{\n"
-                        + "  \"name\": \"Prod User\",\n"
+                        + "  \"firstName\": \"Prod\",\n"
+                        + "  \"lastName\": \"User\",\n"
                         + "  \"email\": \"%s\",\n"
-                        + "  \"password\": \"password123\"\n"
+                        + "  \"password\": \"password123\",\n"
+                        + "  \"confirmPassword\": \"password123\"\n"
                         + "}\n")
                 .formatted(email);
     }
