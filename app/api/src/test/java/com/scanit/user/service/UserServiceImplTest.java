@@ -5,6 +5,7 @@ import com.scanit.user.dto.UserRequestDto;
 import com.scanit.user.dto.UserResponseDto;
 import com.scanit.user.mapper.UserMapper;
 import com.scanit.user.model.User;
+import com.scanit.user.model.UserStatus;
 import com.scanit.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,18 @@ class UserServiceImplTest {
     @Test
     void shouldRegisterUserAndEncodePassword() {
         UserRequestDto request = userRequestDto("Alice", "alice@example.com", "password123");
-        User savedUser = new User(1L, "Alice", "alice@example.com", "encoded-password", LocalDateTime.now());
+
+        User savedUser = new User(
+                1L,
+                "Alice",
+                "Alice",
+                "User",
+                "alice@example.com",
+                "encoded-password",
+                UserStatus.ACTIVE,
+                LocalDateTime.now()
+        );
+
         UserResponseDto response = new UserResponseDto(1L, "Alice", "alice@example.com");
 
         when(userRepository.existsByEmail("alice@example.com")).thenReturn(false);
@@ -61,8 +73,11 @@ class UserServiceImplTest {
         assertThat(actualResponse).isEqualTo(response);
         assertThat(persistedUser.getId()).isNull();
         assertThat(persistedUser.getName()).isEqualTo("Alice");
+        assertThat(persistedUser.getFirstName()).isEqualTo("Alice");
+        assertThat(persistedUser.getLastName()).isEqualTo("User");
         assertThat(persistedUser.getEmail()).isEqualTo("alice@example.com");
         assertThat(persistedUser.getPassword()).isEqualTo("encoded-password");
+        assertThat(persistedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
         assertThat(persistedUser.getCreatedAt()).isNotNull();
     }
 

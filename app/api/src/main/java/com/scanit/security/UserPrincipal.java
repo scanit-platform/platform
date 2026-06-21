@@ -1,6 +1,7 @@
 package com.scanit.security;
 
 import com.scanit.user.model.User;
+import com.scanit.user.model.UserStatus;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -15,12 +16,14 @@ public class UserPrincipal implements UserDetails {
     private final String name;
     private final String email;
     private final String password;
+    private final UserStatus status;
 
-    public UserPrincipal(Long id, String name, String email, String password) {
+    public UserPrincipal(Long id, String name, String email, String password, UserStatus status) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.password = password;
+        this.status = status;
     }
 
     public static UserPrincipal from(User user) {
@@ -28,7 +31,9 @@ public class UserPrincipal implements UserDetails {
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
-                user.getPassword());
+                user.getPassword(),
+                user.getStatus()
+        );
     }
 
     @Override
@@ -39,5 +44,10 @@ public class UserPrincipal implements UserDetails {
     @Override
     public String getUsername() {
         return email;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return status == UserStatus.ACTIVE;
     }
 }
