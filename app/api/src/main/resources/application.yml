@@ -22,6 +22,18 @@ spring:
     clean-disabled: true
   lifecycle:
     timeout-per-shutdown-phase: 20s
+  cloud:
+    aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID}
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
+      region:
+        static: us-east-1
+      ses:
+        from: no-reply@scanit.com
+app:
+  email:
+    from: noreply@scanit.com
 
 server:
   port: ${PORT:8080}
