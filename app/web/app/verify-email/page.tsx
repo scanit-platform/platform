@@ -39,7 +39,7 @@ export default async function VerifyEmailPage({
             if (tokenError) {
                 errorMessage = tokenError;
             } else {
-                redirect("/login?verified=true");
+                redirect("/dashboard?verified=true");
             }
         } catch (error) {
             errorMessage =
