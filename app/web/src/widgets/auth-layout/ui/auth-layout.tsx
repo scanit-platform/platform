@@ -4,9 +4,10 @@ import { AuthForm } from "@/src/features/auth/ui/auth-form";
 
 type AuthLayoutProps = {
   initialMode?: AuthMode;
+  verified?: boolean;
 };
 
-export function AuthLayout({ initialMode }: AuthLayoutProps) {
+export function AuthLayout({ initialMode, verified }: AuthLayoutProps) {
   return (
     <main className="scanit-auth-shell">
       <aside className="scanit-app-sidebar hidden md:flex">
@@ -66,6 +67,11 @@ export function AuthLayout({ initialMode }: AuthLayoutProps) {
                   "auth-card-enter 500ms cubic-bezier(0.16,1,0.3,1) forwards",
               }}
             >
+              {verified && (
+                 <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-[0.8125rem] font-medium text-green-700 border border-green-200">
+                    ✓ Email verified successfully! You can now log in.
+                  </div>
+                  )}
               <AuthForm initialMode={initialMode} />
             </section>
           </div>

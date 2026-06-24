@@ -4,10 +4,12 @@ import { AuthLayout } from "@/src/widgets/auth-layout/ui/auth-layout";
 
 type LoginViewProps = {
   initialMode?: AuthMode;
+  verified?: boolean;
 };
 
-export function LoginView({ initialMode }: LoginViewProps) {
+export function LoginView({ initialMode, verified }: LoginViewProps) {
   return createElement(AuthLayout, {
     initialMode,
+    verified,
   });
 }
