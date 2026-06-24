@@ -153,7 +153,7 @@ export function AuthForm({ initialMode = "signup" }: AuthFormProps) {
 
                   <div className="animate-[auth-field-enter_400ms_cubic-bezier(0.16,1,0.3,1)]">
                     <Link
-                        href="/login"
+                        href="/forgot-password"
                         className="ml-auto block w-fit text-[0.8125rem] font-medium text-[var(--scanit-primary)] transition-colors duration-150 hover:text-[var(--scanit-primary-light)]"
                     >
                       Forgot password?
