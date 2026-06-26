@@ -4,6 +4,7 @@ import type { AuthMode } from "@/src/features/auth/model/auth-state";
 type HomePageProps = {
   searchParams: Promise<{
     mode?: string | string[] | undefined;
+    verified?: string;
   }>;
 };
 
@@ -14,7 +15,8 @@ function getInitialMode(mode: string | string[] | undefined): AuthMode {
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const { mode } = await searchParams;
+  const { mode, verified } = await searchParams;
 
-  return <LoginView initialMode={getInitialMode(mode)} />;
+  return (<LoginView initialMode={getInitialMode(mode)} 
+        verified={verified === "true"} />);
 }

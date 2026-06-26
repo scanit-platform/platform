@@ -22,6 +22,17 @@ spring:
     clean-disabled: true
   lifecycle:
     timeout-per-shutdown-phase: 20s
+  mail:
+    host: email-smtp.us-east-1.amazonaws.com
+    port: 587
+    username: ${AWS_SES_SMTP_USERNAME}
+    password: ${AWS_SES_SMTP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
   cloud:
     aws:
       credentials:
@@ -34,6 +45,7 @@ spring:
 app:
   email:
     from: noreply@scanit.com
+  base-url: ${BASE_URL:http://localhost:3000}
 
 server:
   port: ${PORT:8080}
