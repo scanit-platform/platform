@@ -21,7 +21,7 @@ public class Receipt {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String vendorName;
 
     @Column(precision = 10, scale = 2)
@@ -30,7 +30,7 @@ public class Receipt {
     @Column(precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDate transactionDate;
 
     @Enumerated(EnumType.STRING)
