@@ -1,0 +1,5 @@
+{"properties": [{
+  "name": "spring.cloud.aws.s3.receipts-bucket",
+  "type": "java.lang.String",
+  "description": "The S3 bucket name where the receipts are stored"
+}]}

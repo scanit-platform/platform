@@ -1,6 +1,7 @@
 package com.scanit.receipt.controller;
 
 import com.scanit.receipt.dto.ReceiptDTO;
+import com.scanit.receipt.dto.ReceiptExtractRequestDTO;
 import com.scanit.receipt.exception.ReceiptNotFoundException;
 import com.scanit.receipt.model.Receipt;
 import com.scanit.receipt.service.ReceiptService;
@@ -79,6 +80,12 @@ public class ReceiptController {
         }
 
         return dtos;
+    }
+    
+    @PostMapping("/extract")
+    public ResponseEntity<ReceiptDTO> extractReceipt(@RequestBody ReceiptExtractRequestDTO dto) {
+        return ResponseEntity.status(201)
+                .body(receiptService.extract(dto));
     }
 
     @ExceptionHandler(ReceiptNotFoundException.class)

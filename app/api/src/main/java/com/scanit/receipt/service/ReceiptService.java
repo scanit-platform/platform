@@ -2,6 +2,8 @@ package com.scanit.receipt.service;
 
 import com.scanit.receipt.model.Receipt;
 import com.scanit.receipt.dto.ReceiptDTO;
+import com.scanit.receipt.dto.ReceiptExtractRequestDTO;
+
 import java.util.Optional;
 import java.util.List;
 import java.time.LocalDate;
@@ -14,4 +16,5 @@ public interface ReceiptService {
     List<Receipt> search(Long id, String vendorName, LocalDate transactionDate);
     List<Receipt> findByVendorName(String vendorName);
     List<Receipt> findByTransactionDate(LocalDate transactionDate);
+    ReceiptDTO extract(ReceiptExtractRequestDTO dto);
 }
