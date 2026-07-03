@@ -7,8 +7,12 @@ import java.time.LocalDate;
 
 public interface ReceiptRepository extends CrudRepository<Receipt, Long> {
     List<Receipt> findByUserId(Long userId);
+
     List<Receipt> findByUserIdAndVendorName(Long userId, String vendorName);
+
     List<Receipt> findByVendorName(String vendorName);
+
     List<Receipt> findByTransactionDate(LocalDate transactionDate);
+
     List<Receipt> findByUserIdAndVendorNameAndTransactionDate(Long userId, String vendorName, LocalDate transactionDate);
 }

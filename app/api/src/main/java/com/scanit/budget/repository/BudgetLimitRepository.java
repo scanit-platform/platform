@@ -4,11 +4,14 @@ import com.scanit.budget.model.BudgetLimit;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
 public interface BudgetLimitRepository extends JpaRepository<BudgetLimit, Long> {
     List<BudgetLimit> findByUserId(Long userId);
+
     List<BudgetLimit> findByUserIdAndPeriod(Long userId, String period);
-    List<BudgetLimit> findByUserIdAndBudgetCategoryId(Long userId, Long categoryId);
-    List<BudgetLimit> findByUserIdAndBudgetCategoryIdAndPeriod(Long userId, Long categoryId, String period);
+
+    List<BudgetLimit> findByUserIdAndCategoryId(Long userId, UUID categoryId);
+
+    List<BudgetLimit> findByUserIdAndCategoryIdAndPeriod(Long userId, UUID categoryId, String period);
 }

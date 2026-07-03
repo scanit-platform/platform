@@ -1,9 +1,24 @@
 package com.scanit.budget.dto;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record BudgetLimitRequestDTO(
-        Long categoryId,
+        @NotNull(message = "User id is required")
+        Long userId,
+
+        @NotNull(message = "Category id is required")
+        UUID categoryId,
+
+        @NotNull(message = "Monthly limit is required")
+        @Positive(message = "Monthly limit must be positive")
         BigDecimal monthlyLimit,
+
+        @NotNull(message = "Period is required")
+        @Pattern(regexp = "^\\d{4}-\\d{2}$", message = "Period must use YYYY-MM format")
         String period
 ) { }

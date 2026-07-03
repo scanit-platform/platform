@@ -1,12 +1,23 @@
 package com.scanit.receipt.model;
 
-import com.scanit.budget.model.BudgetCategory;
+import com.scanit.category.model.Category;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
-import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "receipt_line_item")
+@Getter
+@Setter
 public class ReceiptLineItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,11 +29,11 @@ public class ReceiptLineItem {
 
     private BigDecimal price;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receipt_id")
     private Receipt receipt;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
-    private BudgetCategory category;
+    private Category category;
 }
