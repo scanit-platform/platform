@@ -39,11 +39,11 @@ spring:
         access-key: ${AWS_ACCESS_KEY_ID}
         secret-key: ${AWS_SECRET_ACCESS_KEY}
       region:
-        static: us-east-1
+        static: ${AWS_REGION}
       ses:
         from: no-reply@scanit.com
       s3:
-        receipts-bucket: receipt-bucket-475559502204-eu-west-1-an
+        receipts-bucket: ${AWS_S3_RECEIPT_BUCKET}
 app:
   email:
     from: noreply@scanit.com
