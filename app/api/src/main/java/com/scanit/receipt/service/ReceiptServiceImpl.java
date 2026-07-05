@@ -34,7 +34,7 @@ public class ReceiptServiceImpl implements ReceiptService {
     private final TextractClient textractClient;
     private final AnalyzeExpenseResponseMapper analyzeExpenseResponseMapper;
     
-    @Value("${spring.cloud.aws.s3.receipts-bucket")
+    @Value("${spring.cloud.aws.s3.receipts-bucket}")
     private String receiptsBucket;
 
     public ReceiptServiceImpl(ReceiptRepository receiptRepository, ReceiptMapper receiptMapper,  UserRepository userRepository, TextractClient textractClient, AnalyzeExpenseResponseMapper analyzeExpenseResponseMapper) {
