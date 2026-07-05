@@ -2,7 +2,7 @@ spring:
   application:
     name: scanit-platform
   profiles:
-    default: local
+    default: ${SPRING_PROFILES_ACTIVE:local}
   config:
     import: optional:file:.env[.properties]
   jpa:
