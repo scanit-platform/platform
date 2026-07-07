@@ -32,20 +32,24 @@ public class AnalyzeExpenseResponseMapper {
             switch(type) {
                 case "VENDOR_NAME" -> receipt.setVendorName(value);
                 case "INVOICE_RECEIPT_DATE" -> receipt.setTransactionDate(parseTransactionDate(value));
-                case "SUBTOTAL" -> {
-                    BigDecimal amount = new BigDecimal(value);
-                    receipt.setTransactionAmount(amount);
-                }
-                case "TOTAL" -> {
-                    BigDecimal amount = new BigDecimal(value);
-                    receipt.setTotalAmount(amount);
-                }
+                case "SUBTOTAL" -> receipt.setTransactionAmount(parseAmount(value));
+                case "TOTAL" -> receipt.setTotalAmount(parseAmount(value));
             }
         }
 
         receipt.setOcrStatus(OCRStatus.COMPLETED);
 
         return receipt;
+    }
+    
+    private BigDecimal parseAmount(String value) {
+        try {
+            value = value.replace("$", "").replace("€", "").replace("£", "");
+            BigDecimal amount = new BigDecimal(value);
+            return amount;
+        } catch(NumberFormatException e) {
+            return new BigDecimal(0);
+        }
     }
 
     private LocalDate parseTransactionDate(String value) {
