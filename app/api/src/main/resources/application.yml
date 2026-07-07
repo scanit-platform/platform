@@ -42,6 +42,15 @@ spring:
         static: us-east-1
       ses:
         from: no-reply@scanit.com
+      s3:
+        bucket: scanit-receipt-images-s3-bucket-650539478336-eu-west-1-an
+        access-key: ${AWS_ACCESS_KEY}
+        secret-key: ${AWS_SECRET_KEY}
+        region: eu-west-1
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
 app:
   email:
     from: noreply@scanit.com
