@@ -2,6 +2,8 @@ package com.scanit.receipt.mapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 
 import org.springframework.stereotype.Component;
 
@@ -29,7 +31,7 @@ public class AnalyzeExpenseResponseMapper {
             
             switch(type) {
                 case "VENDOR_NAME" -> receipt.setVendorName(value);
-                case "INVOICE_RECEIPT_DATE" -> receipt.setTransactionDate(LocalDate.parse(value));
+                case "INVOICE_RECEIPT_DATE" -> receipt.setTransactionDate(parseTransactionDate(value));
                 case "SUBTOTAL" -> {
                     BigDecimal amount = new BigDecimal(value);
                     receipt.setTransactionAmount(amount);
@@ -44,5 +46,15 @@ public class AnalyzeExpenseResponseMapper {
         receipt.setOcrStatus(OCRStatus.COMPLETED);
 
         return receipt;
+    }
+
+    private LocalDate parseTransactionDate(String value) {
+        DateTimeFormatter formats = new DateTimeFormatterBuilder()
+        .appendOptional(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+        .appendOptional(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+        .toFormatter();
+
+        LocalDate date = LocalDate.parse(value, formats);
+        return date;
     }
 }
