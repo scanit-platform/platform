@@ -2,7 +2,7 @@ spring:
   application:
     name: scanit-platform
   profiles:
-    default: local
+    default: ${SPRING_PROFILES_ACTIVE:local}
   config:
     import: optional:file:.env[.properties]
   jpa:
@@ -39,10 +39,11 @@ spring:
         access-key: ${AWS_ACCESS_KEY_ID}
         secret-key: ${AWS_SECRET_ACCESS_KEY}
       region:
-        static: us-east-1
+        static: ${AWS_REGION}
       ses:
         from: no-reply@scanit.com
       s3:
+        receipts-bucket: ${AWS_S3_RECEIPT_BUCKET}
         bucket: scanit-receipt-images-s3-bucket-650539478336-eu-west-1-an
         access-key: ${AWS_ACCESS_KEY}
         secret-key: ${AWS_SECRET_KEY}

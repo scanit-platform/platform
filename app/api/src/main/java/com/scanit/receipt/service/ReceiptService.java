@@ -2,6 +2,7 @@ package com.scanit.receipt.service;
 
 import com.scanit.receipt.model.Receipt;
 import com.scanit.receipt.dto.ReceiptDTO;
+import com.scanit.receipt.dto.ReceiptExtractRequestDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
@@ -22,5 +23,6 @@ public interface ReceiptService {
     List<Receipt> findByVendorName(String vendorName);
 
     List<Receipt> findByTransactionDate(LocalDate transactionDate);
+    ReceiptDTO extract(ReceiptExtractRequestDTO dto);
     ReceiptDTO uploadReceipt(MultipartFile file, Long userId);
 }

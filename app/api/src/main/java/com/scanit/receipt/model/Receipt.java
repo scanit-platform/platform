@@ -38,6 +38,7 @@ public class Receipt {
     @Column(nullable = true)
     private String vendorName;
 
+    /** Represents the sub-total before tax */
     @Column(precision = 10, scale = 2)
     private BigDecimal transactionAmount;
 
