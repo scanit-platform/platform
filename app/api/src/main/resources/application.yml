@@ -55,6 +55,8 @@ app:
   email:
     from: noreply@scanit.com
   base-url: ${BASE_URL:http://localhost:3000}
+  categories:
+    max-name-length: ${APP_CATEGORIES_MAX_NAME_LENGTH:100}
 
 server:
   port: ${PORT:8080}

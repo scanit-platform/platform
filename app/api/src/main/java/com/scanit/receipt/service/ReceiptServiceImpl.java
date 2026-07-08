@@ -32,11 +32,20 @@ public class ReceiptServiceImpl implements ReceiptService {
     }
 
     @Override
+    @Transactional
     public ReceiptDTO save(ReceiptDTO dto) {
         Receipt receipt = receiptMapper.toEntity(dto);
         User user = userRepository.findById(dto.userId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        CategorySelection categorySelection = categoryReferenceService.resolveOptionalSelection(
+                dto.userId(),
+                dto.generalCategoryId(),
+                dto.customCategoryId());
         receipt.setUser(user);
+        receipt.setGeneralCategory(categorySelection.generalCategory());
+        receipt.setCustomCategory(categorySelection.customCategory());
+        receipt.setImageUrl(dto.imageUrl());
+        receipt.setOcrStatus(dto.ocrStatus());
         Receipt savedReceipt = receiptRepository.save(receipt);
         return receiptMapper.toDTO(savedReceipt);
     }

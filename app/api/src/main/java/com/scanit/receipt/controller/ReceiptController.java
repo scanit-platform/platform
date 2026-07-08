@@ -1,5 +1,6 @@
 package com.scanit.receipt.controller;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import com.scanit.receipt.dto.ReceiptDTO;
 import com.scanit.receipt.exception.ReceiptNotFoundException;
 import com.scanit.receipt.model.Receipt;
@@ -32,7 +33,9 @@ public class ReceiptController {
                 receipt.getTransactionDate(),
                 receipt.getImageUrl(),
                 receipt.getOcrStatus(),
-                receipt.getUser().getId()
+                receipt.getUser().getId(),
+                receipt.getGeneralCategory() == null ? null : receipt.getGeneralCategory().getId(),
+                receipt.getCustomCategory() == null ? null : receipt.getCustomCategory().getId()
         );
     }
 

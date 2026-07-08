@@ -4,6 +4,7 @@ import com.scanit.receipt.model.OCRStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record ReceiptDTO(
     Long id,
@@ -13,5 +14,7 @@ public record ReceiptDTO(
     LocalDate transactionDate,
     String imageUrl,
     OCRStatus ocrStatus,
-    Long userId
+    Long userId,
+    UUID generalCategoryId,
+    UUID customCategoryId
 ) {}
