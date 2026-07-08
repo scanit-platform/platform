@@ -5,9 +5,13 @@ import com.scanit.receipt.dto.ReceiptDTO;
 import com.scanit.receipt.exception.ReceiptNotFoundException;
 import com.scanit.receipt.model.Receipt;
 import com.scanit.receipt.service.ReceiptService;
+import com.scanit.receipt.service.S3StorageService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -17,7 +21,8 @@ import java.util.List;
 @RequestMapping("/api/receipt")
 @CrossOrigin
 public class ReceiptController {
-    private final ReceiptService receiptService;
+    public final ReceiptService receiptService;
+    public final S3StorageService s3StorageService;
 
     private ReceiptDTO toDTO(Receipt receipt) {
         return new ReceiptDTO(
@@ -34,12 +39,10 @@ public class ReceiptController {
         );
     }
 
-    @SuppressFBWarnings(
-            value = "EI_EXPOSE_REP2",
-            justification = "Spring-managed collaborator is intentionally stored for constructor injection."
-    )
-    public ReceiptController(ReceiptService receiptService) {
+    public ReceiptController(ReceiptService receiptService, S3StorageService s3StorageService) {
+
         this.receiptService = receiptService;
+        this.s3StorageService = s3StorageService;
     }
 
     @PostMapping
@@ -70,6 +73,29 @@ public class ReceiptController {
     @DeleteMapping("/{id}")
     public void deleteById(@PathVariable Long id) {
         receiptService.deleteByReceiptId(id);
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<ReceiptDTO> uploadReceipt(
+            @RequestParam Long userId,
+            @RequestParam MultipartFile file) {
+        System.out.println("userId = " + userId);
+        System.out.println("file = " + file.getOriginalFilename());
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(receiptService.uploadReceipt(file, userId));
+    }
+
+    @GetMapping("/{receiptId}/download")
+    public ResponseEntity<byte[]> downloadReceipt(@PathVariable Long receiptId) {
+        Receipt receipt = receiptService.findById(receiptId)
+                .orElseThrow(() -> new ReceiptNotFoundException(receiptId));
+
+        byte[] file = s3StorageService.downloadReceipt(receipt.getImageUrl());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=receipt.jpg")
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(file);
     }
 
     @GetMapping("/search")

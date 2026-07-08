@@ -1,7 +1,6 @@
 package com.scanit.receipt.service;
 
-import com.scanit.category.service.CategoryReferenceService;
-import com.scanit.category.service.CategorySelection;
+import com.scanit.receipt.model.OCRStatus;
 import com.scanit.receipt.model.Receipt;
 import com.scanit.receipt.dto.ReceiptDTO;
 
@@ -14,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.scanit.receipt.repository.ReceiptRepository;
 import com.scanit.receipt.mapper.ReceiptMapper;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -22,17 +22,13 @@ public class ReceiptServiceImpl implements ReceiptService {
     private final ReceiptRepository receiptRepository;
     private final ReceiptMapper receiptMapper;
     private final UserRepository userRepository;
-    private final CategoryReferenceService categoryReferenceService;
+    private final S3StorageService s3StorageService;
 
-    public ReceiptServiceImpl(
-            ReceiptRepository receiptRepository,
-            ReceiptMapper receiptMapper,
-            UserRepository userRepository,
-            CategoryReferenceService categoryReferenceService) {
+    public ReceiptServiceImpl(ReceiptRepository receiptRepository, ReceiptMapper receiptMapper, UserRepository userRepository, S3StorageService s3StorageService) {
         this.receiptRepository = receiptRepository;
         this.receiptMapper = receiptMapper;
         this.userRepository = userRepository;
-        this.categoryReferenceService = categoryReferenceService;
+        this.s3StorageService = s3StorageService;
     }
 
     @Override
@@ -70,6 +66,31 @@ public class ReceiptServiceImpl implements ReceiptService {
         }
 
         return receiptRepository.findByUserId(userId);
+    }
+
+    @Override
+    @Transactional
+    public ReceiptDTO uploadReceipt(MultipartFile file, Long userId) {
+        System.out.println("UPLOAD RECEIVED");
+        System.out.println("userId = " + userId);
+        System.out.println("file = " + file.getOriginalFilename());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        System.out.println("Before s3 upload");
+        String imageUrl = s3StorageService.upload(file);
+        System.out.println("After s3 upload");
+
+        Receipt receipt = new Receipt();
+        receipt.setUser(user);
+        receipt.setImageUrl(imageUrl);
+        receipt.setOcrStatus(OCRStatus.PENDING);
+        receipt.setVendorName("Pending OCR");
+        receipt.setTransactionDate(LocalDate.now());
+
+        Receipt saved = receiptRepository.save(receipt);
+
+        return receiptMapper.toDTO(saved);
     }
 
     @Override
