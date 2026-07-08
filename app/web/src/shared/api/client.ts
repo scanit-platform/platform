@@ -88,13 +88,21 @@ export async function apiFetch<TResponse>(
 ): Promise<TResponse> {
   let response: Response;
 
+  // changing headers so it supports both JSON & file uploads
+  const headers = new Headers(init.headers);
+
+  if (!(init.body instanceof FormData)) {
+      headers.set("Content-Type", "application/json");
+  }
+
   try {
     response = await fetch(`${getApiBaseUrl()}${path}`, {
       ...init,
-      headers: {
-        "Content-Type": "application/json",
-        ...init.headers,
-      },
+      headers,
+//       headers: {
+//         "Content-Type": "application/json",
+//         ...init.headers,
+//       },
       cache: "no-store",
     });
   } catch {
