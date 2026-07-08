@@ -7,6 +7,8 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface BudgetMapper {
-    @Mapping(target = "category", source="budgetCategory.category")
+    @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "generalCategoryId", source = "generalCategory.id")
+    @Mapping(target = "customCategoryId", source = "customCategory.id")
     BudgetLimitResponseDTO toBudgetLimitResponse(BudgetLimit budgetLimit);
 }

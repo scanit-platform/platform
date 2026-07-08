@@ -3,24 +3,43 @@ services:
     image: postgres:17-alpine
     container_name: scanit-postgres
     restart: unless-stopped
+
     environment:
-      POSTGRES_DB: ${DB_NAME:-scanit}
+      POSTGRES_DB: ${DB_NAME:-scanit_db}
       POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+
     ports:
       - "${DB_PORT:-5432}:5432"
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-scanit}"
-        ]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-scanit_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  api:
+    build: .
+    container_name: scanit-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/scanit_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
 
 volumes:
   postgres_data:

@@ -12,7 +12,7 @@ public class SesConfig {
     public SesClient sesClient() {
         return SesClient.builder().region(Region.US_EAST_1).build();
     }
-    
+
     @Bean
     public SimpleEmailServiceMailSender emailSender(SesClient sesClient) {
         return new SimpleEmailServiceMailSender(sesClient);

@@ -64,14 +64,12 @@ class AuthControllerValidationIntegrationTest {
     void shouldRejectMissingConfirmPasswordAtEndpointLevel() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "firstName": "Test",
-                                  "lastName": "User",
-                                  "email": "missing-confirm@example.com",
-                                  "password": "Password1"
-                                }
-                                """))
+                        .content("{\n"
+                                + "  \"firstName\": \"Test\",\n"
+                                + "  \"lastName\": \"User\",\n"
+                                + "  \"email\": \"missing-confirm@example.com\",\n"
+                                + "  \"password\": \"Password1\"\n"
+                                + "}\n"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Confirm password cannot be empty")));
     }

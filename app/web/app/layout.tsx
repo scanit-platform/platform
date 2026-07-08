@@ -1,5 +1,6 @@
 import { dmSans, spaceGrotesk } from "@/src/app/fonts";
 import { metadata as appMetadata } from "@/src/app/metadata";
+import { AppProviders } from "@/src/app/providers";
 import "@/src/app/styles/globals.css";
 
 export const metadata = appMetadata;
@@ -14,7 +15,9 @@ export default function RootLayout({
       lang="en"
       className={`${dmSans.variable} ${spaceGrotesk.variable} h-full antialiased`}
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <AppProviders>{children}</AppProviders>
+      </body>
     </html>
   );
 }

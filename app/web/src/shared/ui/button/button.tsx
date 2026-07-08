@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode;
-  variant?: "primary" | "glass";
+  variant?: "primary" | "secondary" | "cta" | "glass";
 };
 
 export function Button({
@@ -14,13 +14,18 @@ export function Button({
   const sharedClasses =
     "scanit-btn active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-60";
 
-  const variantClasses =
-    variant === "primary"
-      ? "scanit-btn-primary h-[3.25rem]"
-      : "scanit-btn-secondary h-12";
+  const variantClasses = {
+    cta: "scanit-btn-cta h-[3.25rem]",
+    glass: "scanit-btn-secondary h-12",
+    primary: "scanit-btn-primary h-[3.25rem]",
+    secondary: "scanit-btn-secondary h-12",
+  }[variant];
 
   return (
-    <button className={`${sharedClasses} ${variantClasses} ${className}`} {...props}>
+    <button
+      className={`${sharedClasses} ${variantClasses} ${className}`}
+      {...props}
+    >
       {children}
     </button>
   );
