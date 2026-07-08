@@ -1,13 +1,16 @@
 package com.scanit.category.service;
 
-import com.scanit.category.dto.CategoryRequestDTO;
-import com.scanit.category.dto.CategoryResponseDTO;
+import com.scanit.category.config.CategoryProperties;
+import com.scanit.category.dto.CustomCategoryCreateRequestDTO;
+import com.scanit.category.dto.CustomCategoryResponseDTO;
+import com.scanit.category.dto.CustomCategoryUpdateRequestDTO;
+import com.scanit.category.dto.GeneralCategoryResponseDTO;
 import com.scanit.category.mapper.CategoryMapper;
-import com.scanit.category.model.Category;
-import com.scanit.category.model.CategoryType;
-import com.scanit.category.repository.CategoryRepository;
+import com.scanit.category.model.CustomCategory;
+import com.scanit.category.model.GeneralCategory;
+import com.scanit.category.repository.CustomCategoryRepository;
+import com.scanit.category.repository.GeneralCategoryRepository;
 import com.scanit.exception.BadRequestException;
-import com.scanit.exception.ForbiddenException;
 import com.scanit.exception.NotFoundException;
 import com.scanit.user.model.User;
 import com.scanit.user.model.UserStatus;
@@ -19,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -34,10 +38,14 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CategoryServiceImplTest {
     private static final Long USER_ID = 1L;
-    private static final UUID CATEGORY_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
+    private static final UUID GENERAL_CATEGORY_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final UUID CUSTOM_CATEGORY_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
     @Mock
-    private CategoryRepository categoryRepository;
+    private GeneralCategoryRepository generalCategoryRepository;
+
+    @Mock
+    private CustomCategoryRepository customCategoryRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -45,162 +53,190 @@ class CategoryServiceImplTest {
     @Mock
     private CategoryMapper categoryMapper;
 
+    @Mock
+    private CategoryUsageChecker categoryUsageChecker;
+
     private CategoryServiceImpl categoryService;
 
     @BeforeEach
     void setUp() {
-        categoryService = new CategoryServiceImpl(categoryRepository, userRepository, categoryMapper);
+        CategoryProperties categoryProperties = new CategoryProperties();
+        categoryProperties.setMaxNameLength(100);
+        categoryService = new CategoryServiceImpl(
+                generalCategoryRepository,
+                customCategoryRepository,
+                userRepository,
+                categoryMapper,
+                categoryProperties,
+                categoryUsageChecker);
     }
 
     @Test
-    void shouldListActiveCategoriesAvailableToUser() {
-        Category groceries = category("Groceries", CategoryType.EXPENSE, null, true, true);
-        Category custom = category("Pets", CategoryType.EXPENSE, user(), false, true);
-        List<Category> categories = List.of(groceries, custom);
-        List<CategoryResponseDTO> responses = List.of(response(groceries), response(custom));
+    void shouldListGeneralCategories() {
+        GeneralCategory food = generalCategory();
+        List<GeneralCategory> categories = List.of(food);
+        List<GeneralCategoryResponseDTO> responses = List.of(
+                new GeneralCategoryResponseDTO(GENERAL_CATEGORY_ID, "FOOD_DINING", "Food & Dining", "utensils", "#2F855A"));
 
-        when(categoryRepository.findActiveAvailableToUser(USER_ID, CategoryType.EXPENSE)).thenReturn(categories);
-        when(categoryMapper.toResponseList(categories)).thenReturn(responses);
+        when(generalCategoryRepository.findAllByOrderBySortOrderAscNameAsc()).thenReturn(categories);
+        when(categoryMapper.toGeneralResponseList(categories)).thenReturn(responses);
 
-        List<CategoryResponseDTO> actual = categoryService.findActiveAvailableToUser(USER_ID, CategoryType.EXPENSE);
+        List<GeneralCategoryResponseDTO> actual = categoryService.findAllGeneralCategories();
+
+        assertThat(actual).isEqualTo(responses);
+    }
+
+    @Test
+    void shouldListCustomCategoriesForCurrentUserAndGeneralCategory() {
+        CustomCategory customCategory = customCategory("Groceries");
+        List<CustomCategory> categories = List.of(customCategory);
+        List<CustomCategoryResponseDTO> responses = List.of(response(customCategory));
+
+        when(generalCategoryRepository.existsById(GENERAL_CATEGORY_ID)).thenReturn(true);
+        when(customCategoryRepository.findForUser(USER_ID, GENERAL_CATEGORY_ID)).thenReturn(categories);
+        when(categoryMapper.toCustomResponseList(categories)).thenReturn(responses);
+
+        List<CustomCategoryResponseDTO> actual = categoryService.findCustomCategories(USER_ID, GENERAL_CATEGORY_ID);
 
         assertThat(actual).isEqualTo(responses);
     }
 
     @Test
     void shouldCreateCustomCategoryForCurrentUser() {
-        CategoryRequestDTO request = new CategoryRequestDTO("  Pets  ", CategoryType.EXPENSE, "  paw  ", " #111 ");
-        User user = user();
-        Category saved = category("Pets", CategoryType.EXPENSE, user, false, true);
-        CategoryResponseDTO response = response(saved);
+        CustomCategoryCreateRequestDTO request = new CustomCategoryCreateRequestDTO(GENERAL_CATEGORY_ID, "  Groceries  ");
+        User user = user(USER_ID);
+        GeneralCategory generalCategory = generalCategory();
+        CustomCategory saved = customCategory("Groceries");
+        CustomCategoryResponseDTO response = response(saved);
 
-        when(categoryRepository.existsActiveAvailableByNameAndType(USER_ID, "Pets", CategoryType.EXPENSE))
+        when(customCategoryRepository.existsForUserAndGeneralCategory(USER_ID, GENERAL_CATEGORY_ID, "groceries"))
                 .thenReturn(false);
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
-        when(categoryRepository.save(any(Category.class))).thenReturn(saved);
-        when(categoryMapper.toResponse(saved)).thenReturn(response);
+        when(generalCategoryRepository.findById(GENERAL_CATEGORY_ID)).thenReturn(Optional.of(generalCategory));
+        when(customCategoryRepository.save(any(CustomCategory.class))).thenReturn(saved);
+        when(categoryMapper.toCustomResponse(saved)).thenReturn(response);
 
-        CategoryResponseDTO actual = categoryService.createCustomCategory(USER_ID, request);
+        CustomCategoryResponseDTO actual = categoryService.createCustomCategory(USER_ID, request);
 
-        ArgumentCaptor<Category> categoryCaptor = ArgumentCaptor.forClass(Category.class);
-        verify(categoryRepository).save(categoryCaptor.capture());
-        Category persisted = categoryCaptor.getValue();
+        ArgumentCaptor<CustomCategory> captor = ArgumentCaptor.forClass(CustomCategory.class);
+        verify(customCategoryRepository).save(captor.capture());
+        CustomCategory persisted = captor.getValue();
 
         assertThat(actual).isEqualTo(response);
         assertThat(persisted.getUser()).isEqualTo(user);
-        assertThat(persisted.getName()).isEqualTo("Pets");
-        assertThat(persisted.getType()).isEqualTo(CategoryType.EXPENSE);
-        assertThat(persisted.getIcon()).isEqualTo("paw");
-        assertThat(persisted.getColor()).isEqualTo("#111");
-        assertThat(persisted.isSystem()).isFalse();
-        assertThat(persisted.isActive()).isTrue();
+        assertThat(persisted.getGeneralCategory()).isEqualTo(generalCategory);
+        assertThat(persisted.getName()).isEqualTo("Groceries");
+        assertThat(persisted.getNormalizedName()).isEqualTo("groceries");
     }
 
     @Test
-    void shouldRejectDuplicateAvailableCategoryWhenCreating() {
-        CategoryRequestDTO request = new CategoryRequestDTO("Groceries", CategoryType.EXPENSE, null, null);
+    void shouldRejectDuplicateCustomCategoryWhenCreating() {
+        CustomCategoryCreateRequestDTO request = new CustomCategoryCreateRequestDTO(GENERAL_CATEGORY_ID, "Groceries");
 
-        when(categoryRepository.existsActiveAvailableByNameAndType(USER_ID, "Groceries", CategoryType.EXPENSE))
+        when(customCategoryRepository.existsForUserAndGeneralCategory(USER_ID, GENERAL_CATEGORY_ID, "groceries"))
                 .thenReturn(true);
 
         assertThatThrownBy(() -> categoryService.createCustomCategory(USER_ID, request))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessage("Category already exists for this user");
+                .hasMessage("Custom category already exists for this user and general category");
 
         verifyNoInteractions(userRepository, categoryMapper);
     }
 
     @Test
-    void shouldUpdateOwnedCustomCategory() {
-        Category existing = category("Pets", CategoryType.EXPENSE, user(), false, true);
-        existing.setId(CATEGORY_ID);
-        CategoryRequestDTO request = new CategoryRequestDTO("Pet Care", CategoryType.EXPENSE, "pet", "blue");
-        CategoryResponseDTO response = response(existing);
+    void shouldRenameOwnedCustomCategory() {
+        CustomCategory existing = customCategory("Groceries");
+        CustomCategoryUpdateRequestDTO request = new CustomCategoryUpdateRequestDTO("  Weekly Groceries  ");
+        CustomCategoryResponseDTO response = response(existing);
 
-        when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(existing));
-        when(categoryRepository.existsActiveAvailableByNameAndTypeExcludingId(
+        when(customCategoryRepository.findOwnedById(CUSTOM_CATEGORY_ID, USER_ID)).thenReturn(Optional.of(existing));
+        when(customCategoryRepository.existsForUserAndGeneralCategoryExcludingId(
                 USER_ID,
-                "Pet Care",
-                CategoryType.EXPENSE,
-                CATEGORY_ID)).thenReturn(false);
-        when(categoryRepository.save(existing)).thenReturn(existing);
-        when(categoryMapper.toResponse(existing)).thenReturn(response);
+                GENERAL_CATEGORY_ID,
+                "weekly groceries",
+                CUSTOM_CATEGORY_ID)).thenReturn(false);
+        when(customCategoryRepository.save(existing)).thenReturn(existing);
+        when(categoryMapper.toCustomResponse(existing)).thenReturn(response);
 
-        CategoryResponseDTO actual = categoryService.updateCustomCategory(USER_ID, CATEGORY_ID, request);
+        CustomCategoryResponseDTO actual = categoryService.renameCustomCategory(USER_ID, CUSTOM_CATEGORY_ID, request);
 
         assertThat(actual).isEqualTo(response);
-        assertThat(existing.getName()).isEqualTo("Pet Care");
-        assertThat(existing.getIcon()).isEqualTo("pet");
-        assertThat(existing.getColor()).isEqualTo("blue");
+        assertThat(existing.getName()).isEqualTo("Weekly Groceries");
+        assertThat(existing.getNormalizedName()).isEqualTo("weekly groceries");
     }
 
     @Test
-    void shouldRejectModifyingSystemCategory() {
-        Category systemCategory = category("Groceries", CategoryType.EXPENSE, null, true, true);
-        systemCategory.setId(CATEGORY_ID);
-        CategoryRequestDTO request = new CategoryRequestDTO("Food", CategoryType.EXPENSE, null, null);
+    void shouldTreatMissingOrUnownedCustomCategoryAsNotFound() {
+        CustomCategoryUpdateRequestDTO request = new CustomCategoryUpdateRequestDTO("Food");
 
-        when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(systemCategory));
+        when(customCategoryRepository.findOwnedById(CUSTOM_CATEGORY_ID, USER_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> categoryService.updateCustomCategory(USER_ID, CATEGORY_ID, request))
-                .isInstanceOf(ForbiddenException.class)
-                .hasMessage("System categories cannot be modified");
-    }
-
-    @Test
-    void shouldRejectModifyingAnotherUsersCategory() {
-        Category otherUsersCategory = category("Pets", CategoryType.EXPENSE, user(2L), false, true);
-        otherUsersCategory.setId(CATEGORY_ID);
-        CategoryRequestDTO request = new CategoryRequestDTO("Pet Care", CategoryType.EXPENSE, null, null);
-
-        when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(otherUsersCategory));
-
-        assertThatThrownBy(() -> categoryService.updateCustomCategory(USER_ID, CATEGORY_ID, request))
-                .isInstanceOf(ForbiddenException.class)
-                .hasMessage("Category does not belong to the current user");
-    }
-
-    @Test
-    void shouldSoftDeleteOwnedCustomCategory() {
-        Category existing = category("Pets", CategoryType.EXPENSE, user(), false, true);
-        existing.setId(CATEGORY_ID);
-
-        when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(existing));
-        when(categoryRepository.save(existing)).thenReturn(existing);
-
-        categoryService.softDeleteCustomCategory(USER_ID, CATEGORY_ID);
-
-        assertThat(existing.isActive()).isFalse();
-        verify(categoryRepository).save(existing);
-    }
-
-    @Test
-    void shouldTreatInactiveCategoryAsNotFoundWhenDeleting() {
-        Category inactive = category("Pets", CategoryType.EXPENSE, user(), false, false);
-        inactive.setId(CATEGORY_ID);
-
-        when(categoryRepository.findById(CATEGORY_ID)).thenReturn(Optional.of(inactive));
-
-        assertThatThrownBy(() -> categoryService.softDeleteCustomCategory(USER_ID, CATEGORY_ID))
+        assertThatThrownBy(() -> categoryService.renameCustomCategory(USER_ID, CUSTOM_CATEGORY_ID, request))
                 .isInstanceOf(NotFoundException.class)
-                .hasMessage("Category with id " + CATEGORY_ID + " not found");
+                .hasMessage("Custom category with id " + CUSTOM_CATEGORY_ID + " not found");
     }
 
-    private Category category(String name, CategoryType type, User user, boolean system, boolean active) {
-        Category category = new Category();
-        category.setId(CATEGORY_ID);
-        category.setUser(user);
-        category.setName(name);
-        category.setType(type);
-        category.setSystem(system);
-        category.setActive(active);
-        category.setCreatedAt(LocalDateTime.now());
-        category.setUpdatedAt(LocalDateTime.now());
-        return category;
+    @Test
+    void shouldDeleteUnreferencedCustomCategory() {
+        CustomCategory existing = customCategory("Groceries");
+
+        when(customCategoryRepository.findOwnedById(CUSTOM_CATEGORY_ID, USER_ID)).thenReturn(Optional.of(existing));
+        when(categoryUsageChecker.isCustomCategoryReferenced(CUSTOM_CATEGORY_ID)).thenReturn(false);
+
+        categoryService.deleteCustomCategory(USER_ID, CUSTOM_CATEGORY_ID);
+
+        verify(customCategoryRepository).delete(existing);
     }
 
-    private User user() {
-        return user(USER_ID);
+    @Test
+    void shouldRejectDeletingReferencedCustomCategory() {
+        CustomCategory existing = customCategory("Groceries");
+
+        when(customCategoryRepository.findOwnedById(CUSTOM_CATEGORY_ID, USER_ID)).thenReturn(Optional.of(existing));
+        when(categoryUsageChecker.isCustomCategoryReferenced(CUSTOM_CATEGORY_ID)).thenReturn(true);
+
+        assertThatThrownBy(() -> categoryService.deleteCustomCategory(USER_ID, CUSTOM_CATEGORY_ID))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Custom category is referenced and cannot be deleted");
+    }
+
+    @Test
+    void shouldResolveCustomCategorySelection() {
+        CustomCategory existing = customCategory("Groceries");
+
+        when(customCategoryRepository.findOwnedById(CUSTOM_CATEGORY_ID, USER_ID)).thenReturn(Optional.of(existing));
+
+        CategorySelection selection = categoryService.requireSelection(USER_ID, GENERAL_CATEGORY_ID, CUSTOM_CATEGORY_ID);
+
+        assertThat(selection.generalCategory()).isEqualTo(existing.getGeneralCategory());
+        assertThat(selection.customCategory()).isEqualTo(existing);
+    }
+
+    @Test
+    void shouldRejectCustomCategoryThatDoesNotBelongToSelectedGeneralCategory() {
+        CustomCategory existing = customCategory("Groceries");
+        UUID otherGeneralCategoryId = UUID.fromString("00000000-0000-0000-0000-000000000002");
+
+        when(customCategoryRepository.findOwnedById(CUSTOM_CATEGORY_ID, USER_ID)).thenReturn(Optional.of(existing));
+
+        assertThatThrownBy(() -> categoryService.requireSelection(USER_ID, otherGeneralCategoryId, CUSTOM_CATEGORY_ID))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Custom category does not belong to the selected general category");
+    }
+
+    private CustomCategory customCategory(String name) {
+        CustomCategory customCategory = new CustomCategory();
+        customCategory.setId(CUSTOM_CATEGORY_ID);
+        customCategory.setUser(user(USER_ID));
+        customCategory.setGeneralCategory(generalCategory());
+        customCategory.rename(name);
+        customCategory.setCreatedAt(Instant.now());
+        customCategory.setUpdatedAt(Instant.now());
+        return customCategory;
+    }
+
+    private GeneralCategory generalCategory() {
+        return new GeneralCategory(GENERAL_CATEGORY_ID, "FOOD_DINING", "Food & Dining", "utensils", "#2F855A", 10);
     }
 
     private User user(Long id) {
@@ -216,18 +252,14 @@ class CategoryServiceImplTest {
         );
     }
 
-    private CategoryResponseDTO response(Category category) {
-        Long userId = category.getUser() == null ? null : category.getUser().getId();
-
-        return new CategoryResponseDTO(
+    private CustomCategoryResponseDTO response(CustomCategory category) {
+        return new CustomCategoryResponseDTO(
                 category.getId(),
-                userId,
+                category.getUser().getId(),
+                category.getGeneralCategory().getId(),
+                category.getGeneralCategory().getCode(),
+                category.getGeneralCategory().getName(),
                 category.getName(),
-                category.getType(),
-                category.getIcon(),
-                category.getColor(),
-                category.isSystem(),
-                category.isActive(),
                 category.getCreatedAt(),
                 category.getUpdatedAt()
         );

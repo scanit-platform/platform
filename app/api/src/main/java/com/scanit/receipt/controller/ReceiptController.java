@@ -1,5 +1,6 @@
 package com.scanit.receipt.controller;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import com.scanit.receipt.dto.ReceiptDTO;
 import com.scanit.receipt.exception.ReceiptNotFoundException;
 import com.scanit.receipt.model.Receipt;
@@ -16,7 +17,7 @@ import java.util.List;
 @RequestMapping("/api/receipt")
 @CrossOrigin
 public class ReceiptController {
-    public final ReceiptService receiptService;
+    private final ReceiptService receiptService;
 
     private ReceiptDTO toDTO(Receipt receipt) {
         return new ReceiptDTO(
@@ -27,10 +28,16 @@ public class ReceiptController {
                 receipt.getTransactionDate(),
                 receipt.getImageUrl(),
                 receipt.getOcrStatus(),
-                receipt.getUser().getId()
+                receipt.getUser().getId(),
+                receipt.getGeneralCategory() == null ? null : receipt.getGeneralCategory().getId(),
+                receipt.getCustomCategory() == null ? null : receipt.getCustomCategory().getId()
         );
     }
 
+    @SuppressFBWarnings(
+            value = "EI_EXPOSE_REP2",
+            justification = "Spring-managed collaborator is intentionally stored for constructor injection."
+    )
     public ReceiptController(ReceiptService receiptService) {
         this.receiptService = receiptService;
     }

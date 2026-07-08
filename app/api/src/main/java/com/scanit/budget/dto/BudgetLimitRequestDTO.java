@@ -11,8 +11,10 @@ public record BudgetLimitRequestDTO(
         @NotNull(message = "User id is required")
         Long userId,
 
-        @NotNull(message = "Category id is required")
-        UUID categoryId,
+        @NotNull(message = "General category id is required")
+        UUID generalCategoryId,
+
+        UUID customCategoryId,
 
         @NotNull(message = "Monthly limit is required")
         @Positive(message = "Monthly limit must be positive")

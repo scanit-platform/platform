@@ -1,8 +1,9 @@
 package com.scanit.category.controller;
 
-import com.scanit.category.dto.CategoryRequestDTO;
-import com.scanit.category.dto.CategoryResponseDTO;
-import com.scanit.category.model.CategoryType;
+import com.scanit.category.dto.CustomCategoryCreateRequestDTO;
+import com.scanit.category.dto.CustomCategoryResponseDTO;
+import com.scanit.category.dto.CustomCategoryUpdateRequestDTO;
+import com.scanit.category.dto.GeneralCategoryResponseDTO;
 import com.scanit.category.service.CategoryService;
 import com.scanit.security.UserPrincipal;
 import jakarta.validation.Valid;
@@ -29,38 +30,46 @@ import java.util.UUID;
 @RequestMapping("/api/categories")
 @CrossOrigin
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('USER')")
 public class CategoryController {
     private final CategoryService categoryService;
 
-    @GetMapping
-    public List<CategoryResponseDTO> listActiveCategories(
-            @AuthenticationPrincipal UserPrincipal currentUser,
-            @RequestParam(required = false) CategoryType type) {
-        return categoryService.findActiveAvailableToUser(currentUser.getId(), type);
+    @GetMapping("/general")
+    public List<GeneralCategoryResponseDTO> listGeneralCategories() {
+        return categoryService.findAllGeneralCategories();
     }
 
-    @PostMapping
-    public ResponseEntity<CategoryResponseDTO> createCustomCategory(
+    @GetMapping("/custom")
+    @PreAuthorize("hasRole('USER')")
+    public List<CustomCategoryResponseDTO> listCustomCategories(
             @AuthenticationPrincipal UserPrincipal currentUser,
-            @Valid @RequestBody CategoryRequestDTO request) {
+            @RequestParam(required = false) UUID generalCategoryId) {
+        return categoryService.findCustomCategories(currentUser.getId(), generalCategoryId);
+    }
+
+    @PostMapping("/custom")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<CustomCategoryResponseDTO> createCustomCategory(
+            @AuthenticationPrincipal UserPrincipal currentUser,
+            @Valid @RequestBody CustomCategoryCreateRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(categoryService.createCustomCategory(currentUser.getId(), request));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<CategoryResponseDTO> updateCustomCategory(
+    @PutMapping("/custom/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<CustomCategoryResponseDTO> renameCustomCategory(
             @AuthenticationPrincipal UserPrincipal currentUser,
             @PathVariable UUID id,
-            @Valid @RequestBody CategoryRequestDTO request) {
-        return ResponseEntity.ok(categoryService.updateCustomCategory(currentUser.getId(), id, request));
+            @Valid @RequestBody CustomCategoryUpdateRequestDTO request) {
+        return ResponseEntity.ok(categoryService.renameCustomCategory(currentUser.getId(), id, request));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/custom/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteCustomCategory(
             @AuthenticationPrincipal UserPrincipal currentUser,
             @PathVariable UUID id) {
-        categoryService.softDeleteCustomCategory(currentUser.getId(), id);
+        categoryService.deleteCustomCategory(currentUser.getId(), id);
         return ResponseEntity.noContent().build();
     }
 }

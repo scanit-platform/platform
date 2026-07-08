@@ -6,8 +6,8 @@ import java.util.UUID;
 public record BudgetLimitResponseDTO(
         Long id,
         Long userId,
-        UUID categoryId,
-        String category,
+        UUID generalCategoryId,
+        UUID customCategoryId,
         BigDecimal monthlyLimit,
         String period
 ) { }

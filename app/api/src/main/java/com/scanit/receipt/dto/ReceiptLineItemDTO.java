@@ -8,6 +8,6 @@ public record ReceiptLineItemDTO(
         String description,
         Integer quantity,
         BigDecimal price,
-        UUID categoryId,
-        String category
+        UUID generalCategoryId,
+        UUID customCategoryId
 ) { }

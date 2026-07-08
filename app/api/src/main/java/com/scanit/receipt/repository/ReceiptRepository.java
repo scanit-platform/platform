@@ -4,6 +4,7 @@ import org.springframework.data.repository.CrudRepository;
 import com.scanit.receipt.model.Receipt;
 import java.util.List;
 import java.time.LocalDate;
+import java.util.UUID;
 
 public interface ReceiptRepository extends CrudRepository<Receipt, Long> {
     List<Receipt> findByUserId(Long userId);
@@ -15,4 +16,6 @@ public interface ReceiptRepository extends CrudRepository<Receipt, Long> {
     List<Receipt> findByTransactionDate(LocalDate transactionDate);
 
     List<Receipt> findByUserIdAndVendorNameAndTransactionDate(Long userId, String vendorName, LocalDate transactionDate);
+
+    boolean existsByCustomCategoryId(UUID customCategoryId);
 }

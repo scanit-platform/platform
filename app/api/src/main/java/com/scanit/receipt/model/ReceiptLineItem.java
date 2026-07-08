@@ -1,6 +1,7 @@
 package com.scanit.receipt.model;
 
-import com.scanit.category.model.Category;
+import com.scanit.category.model.CustomCategory;
+import com.scanit.category.model.GeneralCategory;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -34,6 +35,10 @@ public class ReceiptLineItem {
     private Receipt receipt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private Category category;
+    @JoinColumn(name = "general_category_id")
+    private GeneralCategory generalCategory;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "custom_category_id")
+    private CustomCategory customCategory;
 }

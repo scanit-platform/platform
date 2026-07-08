@@ -1,6 +1,7 @@
 package com.scanit.budget.model;
 
-import com.scanit.category.model.Category;
+import com.scanit.category.model.CustomCategory;
+import com.scanit.category.model.GeneralCategory;
 import com.scanit.user.model.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -34,8 +35,12 @@ public class BudgetLimit {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
+    @JoinColumn(name = "general_category_id", nullable = false)
+    private GeneralCategory generalCategory;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "custom_category_id")
+    private CustomCategory customCategory;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal monthlyLimit;

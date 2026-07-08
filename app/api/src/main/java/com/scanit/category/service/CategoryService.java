@@ -1,18 +1,21 @@
 package com.scanit.category.service;
 
-import com.scanit.category.dto.CategoryRequestDTO;
-import com.scanit.category.dto.CategoryResponseDTO;
-import com.scanit.category.model.CategoryType;
+import com.scanit.category.dto.CustomCategoryCreateRequestDTO;
+import com.scanit.category.dto.CustomCategoryResponseDTO;
+import com.scanit.category.dto.CustomCategoryUpdateRequestDTO;
+import com.scanit.category.dto.GeneralCategoryResponseDTO;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface CategoryService {
-    List<CategoryResponseDTO> findActiveAvailableToUser(Long userId, CategoryType type);
+    List<GeneralCategoryResponseDTO> findAllGeneralCategories();
 
-    CategoryResponseDTO createCustomCategory(Long userId, CategoryRequestDTO request);
+    List<CustomCategoryResponseDTO> findCustomCategories(Long userId, UUID generalCategoryId);
 
-    CategoryResponseDTO updateCustomCategory(Long userId, UUID categoryId, CategoryRequestDTO request);
+    CustomCategoryResponseDTO createCustomCategory(Long userId, CustomCategoryCreateRequestDTO request);
 
-    void softDeleteCustomCategory(Long userId, UUID categoryId);
+    CustomCategoryResponseDTO renameCustomCategory(Long userId, UUID categoryId, CustomCategoryUpdateRequestDTO request);
+
+    void deleteCustomCategory(Long userId, UUID categoryId);
 }
