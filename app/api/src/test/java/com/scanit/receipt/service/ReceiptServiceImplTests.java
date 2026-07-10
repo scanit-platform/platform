@@ -12,13 +12,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import com.scanit.category.service.CategoryReferenceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.scanit.receipt.dto.ReceiptDTO;
 import com.scanit.receipt.dto.ReceiptExtractRequestDTO;
@@ -48,13 +48,24 @@ public class ReceiptServiceImplTests {
     private TextractClient textractClient;
     @Mock
     private AnalyzeExpenseResponseMapper analyzeExpenseResponseMapper;
+    @Mock
+    private S3StorageService s3StorageService;
+    @Mock
+    private CategoryReferenceService categoryReferenceService;
 
     private ReceiptServiceImpl receiptService;
     
     @BeforeEach
     void setUp() {
-        receiptService = new ReceiptServiceImpl(receiptRepository, receiptMapper, userRepository, textractClient, analyzeExpenseResponseMapper);
-        ReflectionTestUtils.setField(receiptService, "receiptsBucket", "test-bucket");
+        receiptService = new ReceiptServiceImpl(
+                receiptRepository,
+                receiptMapper,
+                userRepository,
+                textractClient,
+                analyzeExpenseResponseMapper,
+                s3StorageService,
+                categoryReferenceService,
+                "test-bucket");
     }
     
     @Test
@@ -107,6 +118,7 @@ public class ReceiptServiceImplTests {
         
         assertThat(resultDto).isEqualTo(expectedDto);
         assertThat(mappedReceipt.getUser()).isEqualTo(user);
+        assertThat(mappedReceipt.getImageUrl()).isEqualTo("https://test-bucket.s3.amazonaws.com/test-receipt.png");
         
         ArgumentCaptor<AnalyzeExpenseRequest> captor = ArgumentCaptor.forClass(AnalyzeExpenseRequest.class);
         verify(textractClient).analyzeExpense(captor.capture());
@@ -141,7 +153,17 @@ public class ReceiptServiceImplTests {
     }
 
     private ReceiptDTO createMockReceiptDTO() {
-        ReceiptDTO dto = new ReceiptDTO(1L, "Tesco", BigDecimal.valueOf(21.99), BigDecimal.valueOf(22.99), LocalDate.now(), "https://google.com", OCRStatus.COMPLETED, 1L);
+        ReceiptDTO dto = new ReceiptDTO(
+                1L,
+                "Tesco",
+                BigDecimal.valueOf(21.99),
+                BigDecimal.valueOf(22.99),
+                LocalDate.now(),
+                "https://google.com",
+                OCRStatus.COMPLETED,
+                1L,
+                null,
+                null);
         return dto;
     }
 }

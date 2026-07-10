@@ -10,8 +10,23 @@ spring:
     clean-disabled: true
   jpa:
     show-sql: false
+  cloud:
+    aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID}
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
+      region:
+        static: ${AWS_REGION}
+      ses:
+        from: ${APP_EMAIL_FROM}
+      s3:
+        receipts-bucket: ${AWS_S3_RECEIPT_BUCKET}
 
 app:
+  base-url: ${BASE_URL}
+  email:
+    from: ${APP_EMAIL_FROM}
+    delivery-enabled: ${APP_EMAIL_DELIVERY_ENABLED:true}
   security:
     jwt:
       secret: ${APP_SECURITY_JWT_SECRET}

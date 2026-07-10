@@ -1,6 +1,5 @@
 package com.scanit.receipt.controller;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import com.scanit.receipt.dto.ReceiptDTO;
 import com.scanit.receipt.dto.ReceiptExtractRequestDTO;
 import com.scanit.receipt.exception.ReceiptNotFoundException;
@@ -22,8 +21,8 @@ import java.util.List;
 @RequestMapping("/api/receipt")
 @CrossOrigin
 public class ReceiptController {
-    public final ReceiptService receiptService;
-    public final S3StorageService s3StorageService;
+    private final ReceiptService receiptService;
+    private final S3StorageService s3StorageService;
 
     private ReceiptDTO toDTO(Receipt receipt) {
         return new ReceiptDTO(
@@ -41,7 +40,6 @@ public class ReceiptController {
     }
 
     public ReceiptController(ReceiptService receiptService, S3StorageService s3StorageService) {
-
         this.receiptService = receiptService;
         this.s3StorageService = s3StorageService;
     }
@@ -80,8 +78,6 @@ public class ReceiptController {
     public ResponseEntity<ReceiptDTO> uploadReceipt(
             @RequestParam Long userId,
             @RequestParam MultipartFile file) {
-        System.out.println("userId = " + userId);
-        System.out.println("file = " + file.getOriginalFilename());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(receiptService.uploadReceipt(file, userId));
     }
@@ -106,9 +102,9 @@ public class ReceiptController {
             @RequestParam(required = false) LocalDate transactionDate
     ) {
         List<Receipt> receipts = receiptService.search(userId, vendorName, transactionDate);
-        List<ReceiptDTO> dtos =  new ArrayList<>();
+        List<ReceiptDTO> dtos = new ArrayList<>();
 
-        for (Receipt receipt : receipts) { //uses the receipts variable defined above.
+        for (Receipt receipt : receipts) {
             dtos.add(toDTO(receipt));
         }
 

@@ -1,4 +1,4 @@
-import { LoginView } from "@/src/views/login/LoginView";
+import { LoginView } from "@/src/views/login/ui/login-view";
 import type { AuthMode } from "@/src/features/auth/model/auth-state";
 
 type HomePageProps = {

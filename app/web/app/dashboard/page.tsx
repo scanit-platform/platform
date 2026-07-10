@@ -1,4 +1,4 @@
-import { DashboardView } from "@/src/views/dashboard/DashboardView";
+import { DashboardView } from "@/src/views/dashboard/ui/dashboard-view";
 
 type DashboardRouteProps = {
   searchParams: Promise<{

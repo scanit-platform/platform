@@ -1,57 +1,60 @@
 package com.scanit.receipt.service;
 
-import com.scanit.receipt.model.OCRStatus;
-import com.scanit.receipt.model.Receipt;
+import com.scanit.category.service.CategoryReferenceService;
+import com.scanit.category.service.CategorySelection;
 import com.scanit.receipt.dto.ReceiptDTO;
 import com.scanit.receipt.dto.ReceiptExtractRequestDTO;
 import com.scanit.receipt.exception.ReceiptNotExtractedException;
-
-import java.time.LocalDate;
-import java.util.Optional;
-
+import com.scanit.receipt.mapper.AnalyzeExpenseResponseMapper;
+import com.scanit.receipt.mapper.ReceiptMapper;
+import com.scanit.receipt.model.OCRStatus;
+import com.scanit.receipt.model.Receipt;
+import com.scanit.receipt.repository.ReceiptRepository;
 import com.scanit.user.model.User;
 import com.scanit.user.repository.UserRepository;
-
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.textract.TextractClient;
 import software.amazon.awssdk.services.textract.model.AnalyzeExpenseRequest;
 import software.amazon.awssdk.services.textract.model.AnalyzeExpenseResponse;
 import software.amazon.awssdk.services.textract.model.Document;
 import software.amazon.awssdk.services.textract.model.S3Object;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import com.scanit.receipt.repository.ReceiptRepository;
-import com.scanit.receipt.mapper.AnalyzeExpenseResponseMapper;
-import com.scanit.receipt.mapper.ReceiptMapper;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class ReceiptServiceImpl implements ReceiptService {
     private final ReceiptRepository receiptRepository;
     private final ReceiptMapper receiptMapper;
     private final UserRepository userRepository;
     private final TextractClient textractClient;
     private final AnalyzeExpenseResponseMapper analyzeExpenseResponseMapper;
-    
-    @Value("${spring.cloud.aws.s3.receipts-bucket}")
-    private String receiptsBucket;
+    private final S3StorageService s3StorageService;
+    private final CategoryReferenceService categoryReferenceService;
+    private final String receiptsBucket;
 
-    public ReceiptServiceImpl(ReceiptRepository receiptRepository, ReceiptMapper receiptMapper,  UserRepository userRepository, TextractClient textractClient, AnalyzeExpenseResponseMapper analyzeExpenseResponseMapper) {
+    public ReceiptServiceImpl(
+            ReceiptRepository receiptRepository,
+            ReceiptMapper receiptMapper,
+            UserRepository userRepository,
+            TextractClient textractClient,
+            AnalyzeExpenseResponseMapper analyzeExpenseResponseMapper,
+            S3StorageService s3StorageService,
+            CategoryReferenceService categoryReferenceService,
+            @Value("${spring.cloud.aws.s3.receipts-bucket}") String receiptsBucket) {
         this.receiptRepository = receiptRepository;
         this.receiptMapper = receiptMapper;
         this.userRepository = userRepository;
         this.textractClient = textractClient;
         this.analyzeExpenseResponseMapper = analyzeExpenseResponseMapper;
-    private final S3StorageService s3StorageService;
-
-    public ReceiptServiceImpl(ReceiptRepository receiptRepository, ReceiptMapper receiptMapper, UserRepository userRepository, S3StorageService s3StorageService) {
-        this.receiptRepository = receiptRepository;
-        this.receiptMapper = receiptMapper;
-        this.userRepository = userRepository;
         this.s3StorageService = s3StorageService;
+        this.categoryReferenceService = categoryReferenceService;
+        this.receiptsBucket = receiptsBucket;
     }
 
     @Override
@@ -75,9 +78,9 @@ public class ReceiptServiceImpl implements ReceiptService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Receipt> search(Long userId, String vendorName, LocalDate  transactionDate) {
+    public List<Receipt> search(Long userId, String vendorName, LocalDate transactionDate) {
         if (userId != null && vendorName != null && transactionDate != null) {
-            return  receiptRepository.findByUserIdAndVendorNameAndTransactionDate(userId, vendorName, transactionDate);
+            return receiptRepository.findByUserIdAndVendorNameAndTransactionDate(userId, vendorName, transactionDate);
         }
 
         if (userId == null) {
@@ -94,15 +97,14 @@ public class ReceiptServiceImpl implements ReceiptService {
     @Override
     @Transactional
     public ReceiptDTO uploadReceipt(MultipartFile file, Long userId) {
-        System.out.println("UPLOAD RECEIVED");
-        System.out.println("userId = " + userId);
-        System.out.println("file = " + file.getOriginalFilename());
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Receipt file is required");
+        }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        System.out.println("Before s3 upload");
+
         String imageUrl = s3StorageService.upload(file);
-        System.out.println("After s3 upload");
 
         Receipt receipt = new Receipt();
         receipt.setUser(user);
@@ -159,8 +161,28 @@ public class ReceiptServiceImpl implements ReceiptService {
         }
         
         receipt.setUser(user);
+        receipt.setImageUrl(toS3Url(dto.key()));
+        ensurePersistableReceipt(receipt);
         receipt = receiptRepository.save(receipt);
 
         return receiptMapper.toDTO(receipt);
+    }
+
+    private void ensurePersistableReceipt(Receipt receipt) {
+        if (receipt.getVendorName() == null || receipt.getVendorName().isBlank()) {
+            receipt.setVendorName("Unknown vendor");
+        }
+
+        if (receipt.getTransactionDate() == null) {
+            receipt.setTransactionDate(LocalDate.now());
+        }
+
+        if (receipt.getOcrStatus() == null) {
+            receipt.setOcrStatus(OCRStatus.COMPLETED);
+        }
+    }
+
+    private String toS3Url(String key) {
+        return String.format("https://%s.s3.amazonaws.com/%s", receiptsBucket, key);
     }
 }
