@@ -4,10 +4,12 @@ import {
 import { FileIcon } from "@/src/shared/ui/icons/icons";
 
 type ReceiptProcessingStepProps = {
+  progress: number;
   selectedFile: File | null;
 };
 
 export function ReceiptProcessingStep({
+  progress,
   selectedFile,
 }: ReceiptProcessingStepProps) {
   return (
@@ -17,8 +19,21 @@ export function ReceiptProcessingStep({
         Processing receipt
       </h2>
       <p className="mt-2 max-w-md text-sm text-[var(--scanit-text-secondary)]">
-        Extracting merchant, date, line items, and total from your receipt.
+        Uploading your receipt to ScanIt and preparing it for OCR processing.
       </p>
+
+      <div className="mt-6 w-full max-w-md">
+        <div className="mb-2 flex items-center justify-between text-xs font-semibold text-[var(--scanit-text-secondary)]">
+          <span>Upload progress</span>
+          <span>{progress}%</span>
+        </div>
+        <div className="h-2 rounded-full bg-[var(--scanit-soft)]">
+          <div
+            className="h-full rounded-full bg-[var(--scanit-primary)] transition-all duration-200"
+            style={{ width: `${Math.max(progress, 8)}%` }}
+          />
+        </div>
+      </div>
 
       {selectedFile ? (
         <div className="mt-6 flex max-w-full items-center gap-3 rounded-lg border border-[var(--scanit-border)] bg-[var(--scanit-soft)] px-4 py-3 text-left">

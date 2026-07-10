@@ -4,16 +4,11 @@ import type {
   AuthResponse,
   RegisterRequest,
   RegistrationResponse,
-  ResendVerificationRequest,
 } from "@/src/features/auth/types/auth";
 
 function getErrorMessage(status: number) {
   if (status === 401) {
     return "The email or password is incorrect.";
-  }
-
-  if (status === 403) {
-      return "Your account isn't verified. Check your email first.";
   }
 
   if (status === 409) {
@@ -42,27 +37,5 @@ export function login(payload: AuthRequest){
             body: JSON.stringify(payload),
         },
         {getErrorMessage},
-    );
-}
-
-export function verifyEmail(token: string) {
-    return apiFetch<AuthResponse>(
-        `/auth/verify-email?token=${encodeURIComponent(token)}`,
-        {
-            method: "GET",
-        },
-        { getErrorMessage },
-    );
-}
-
-
-export function resendVerification(payload: ResendVerificationRequest) {
-    return apiFetch<RegistrationResponse>(
-        "/auth/resend-verification",
-        {
-            method: "POST",
-            body: JSON.stringify(payload),
-        },
-        { getErrorMessage },
     );
 }

@@ -12,10 +12,6 @@ export type RegistrationResponse = {
   message: string;
 };
 
-export type ResendVerificationRequest = {
-  email: string;
-};
-
 export type AuthRequest = {
   email: string;
   password: string;
@@ -28,4 +24,3 @@ export type AuthResponse = {
   token?: string;
   expiresAt?: string;
 };
-

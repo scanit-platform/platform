@@ -2,9 +2,6 @@ package com.scanit.security;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.scanit.auth.model.EmailVerificationToken;
-import com.scanit.auth.repository.EmailVerificationTokenRepository;
-import com.scanit.user.model.User;
 import com.scanit.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,12 +33,8 @@ class SecurityIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private EmailVerificationTokenRepository emailVerificationTokenRepository;
-
     @BeforeEach
     void cleanDatabase() {
-        emailVerificationTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -58,21 +51,14 @@ class SecurityIntegrationTest {
     }
 
     @Test
-    void shouldRegisterVerifyAndLoginAnonymously() throws Exception {
+    void shouldRegisterAndLoginAnonymously() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registerPayload("alice@example.com")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.token").doesNotExist())
                 .andExpect(jsonPath("$.email").value("alice@example.com"))
-                .andExpect(jsonPath("$.status").value("pending_verification"));
-
-        mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(loginPayload("alice@example.com")))
-                .andExpect(status().isForbidden());
-
-        verifyRegisteredUserAndExtractToken("alice@example.com");
+                .andExpect(jsonPath("$.status").value("active"));
 
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -90,7 +76,7 @@ class SecurityIntegrationTest {
 
     @Test
     void shouldAcceptBearerTokenForCurrentUserEndpoint() throws Exception {
-        String token = registerVerifyAndExtractToken("bob@example.com");
+        String token = registerLoginAndExtractToken("bob@example.com");
 
         mockMvc.perform(get("/auth/me")
                         .header(HttpHeaders.AUTHORIZATION, bearer(token)))
@@ -106,9 +92,7 @@ class SecurityIntegrationTest {
                         .content(registerPayload("carol@example.com")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value("carol@example.com"))
-                .andExpect(jsonPath("$.status").value("pending_verification"));
-
-        verifyRegisteredUserAndExtractToken("carol@example.com");
+                .andExpect(jsonPath("$.status").value("active"));
 
         mockMvc.perform(post("/auth/login")
                         .header(HttpHeaders.AUTHORIZATION, bearer("invalid-token"))
@@ -121,7 +105,7 @@ class SecurityIntegrationTest {
 
     @Test
     void shouldRejectInvalidBearerTokenOnProtectedEndpoint() throws Exception {
-        registerVerifyAndExtractToken("dave@example.com");
+        registerLoginAndExtractToken("dave@example.com");
 
         mockMvc.perform(get("/auth/me")
                         .header(HttpHeaders.AUTHORIZATION, bearer("invalid-token")))
@@ -142,31 +126,21 @@ class SecurityIntegrationTest {
 
         assertThatSecurityIsOpen(openApi, "/paths/~1auth~1register/post/security");
         assertThatSecurityIsOpen(openApi, "/paths/~1auth~1login/post/security");
-        assertThatSecurityIsOpen(openApi, "/paths/~1auth~1verify-email/get/security");
-        assertThatSecurityIsOpen(openApi, "/paths/~1auth~1resend-verification/post/security");
 
         assertThat(openApi.at("/paths/~1auth~1me/get/security/0/bearerAuth").isArray()).isTrue();
     }
 
-    private String registerVerifyAndExtractToken(String email) throws Exception {
+    private String registerLoginAndExtractToken(String email) throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registerPayload(email)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value(email))
-                .andExpect(jsonPath("$.status").value("pending_verification"));
+                .andExpect(jsonPath("$.status").value("active"));
 
-        return verifyRegisteredUserAndExtractToken(email);
-    }
-
-    private String verifyRegisteredUserAndExtractToken(String email) throws Exception {
-        User user = userRepository.findByEmail(email).orElseThrow();
-
-        EmailVerificationToken verificationToken =
-                emailVerificationTokenRepository.findByUser(user).orElseThrow();
-
-        MvcResult result = mockMvc.perform(get("/auth/verify-email")
-                        .param("token", verificationToken.getToken()))
+        MvcResult result = mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginPayload(email)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(jsonPath("$.email").value(email))

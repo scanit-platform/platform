@@ -14,7 +14,7 @@ export function ReceiptScan({ user }: ReceiptScanProps) {
           <h1 className="mb-7 text-center font-serif text-[28px] font-bold text-[var(--scanit-text)]">
             Scan a Receipt
           </h1>
-          <ReceiptScanFlow />
+          <ReceiptScanFlow userId={user?.id} />
         </div>
       </section>
     </AppShell>

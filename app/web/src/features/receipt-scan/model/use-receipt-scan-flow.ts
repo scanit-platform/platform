@@ -1,20 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { createMockExtractedReceipt } from "@/src/entities/receipt/model/mock-receipt";
-import type { ExtractedReceipt } from "@/src/entities/receipt/types/receipt";
+import { useCallback, useState } from "react";
+import { ApiError } from "@/src/shared/api/client";
+import { uploadReceipt } from "@/src/entities/receipt/api/receipts-service";
+import type { Receipt } from "@/src/entities/receipt/types/receipt";
 import {
-  receiptProcessingDelayMs,
   type ReceiptScanStep,
   validateReceiptFile,
 } from "@/src/features/receipt-scan/model/receipt-scan-state";
 
-export function useReceiptScanFlow() {
+export function useReceiptScanFlow(userId: number | undefined) {
   const [step, setStep] = useState<ReceiptScanStep>("upload");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState("");
-  const [receipt, setReceipt] = useState<ExtractedReceipt | null>(null);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [isConfirmed, setIsConfirmed] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const selectReceiptFile = useCallback((file: File | null) => {
     if (!file) {
@@ -28,6 +29,7 @@ export function useReceiptScanFlow() {
       setSelectedFile(null);
       setReceipt(null);
       setIsConfirmed(false);
+      setUploadProgress(0);
       setStep("upload");
       return;
     }
@@ -36,20 +38,45 @@ export function useReceiptScanFlow() {
     setSelectedFile(file);
     setReceipt(null);
     setIsConfirmed(false);
+    setUploadProgress(0);
     setStep("upload");
   }, []);
 
-  const startProcessing = useCallback(() => {
+  const startProcessing = useCallback(async () => {
     if (!selectedFile) {
       setFileError("Choose a receipt before starting the scan.");
+      return;
+    }
+
+    if (!userId) {
+      setFileError("Sign in before uploading receipts.");
       return;
     }
 
     setFileError("");
     setReceipt(null);
     setIsConfirmed(false);
+    setUploadProgress(0);
     setStep("processing");
-  }, [selectedFile]);
+
+    try {
+      const uploadedReceipt = await uploadReceipt({
+        file: selectedFile,
+        onProgress: setUploadProgress,
+        userId,
+      });
+
+      setReceipt(uploadedReceipt);
+      setStep("review");
+    } catch (error) {
+      setFileError(
+        error instanceof ApiError || error instanceof Error
+          ? error.message
+          : "Receipt upload failed. Try again.",
+      );
+      setStep("upload");
+    }
+  }, [selectedFile, userId]);
 
   const resetFlow = useCallback(() => {
     setStep("upload");
@@ -57,24 +84,12 @@ export function useReceiptScanFlow() {
     setFileError("");
     setReceipt(null);
     setIsConfirmed(false);
+    setUploadProgress(0);
   }, []);
 
   const confirmReceipt = useCallback(() => {
     setIsConfirmed(true);
   }, []);
-
-  useEffect(() => {
-    if (step !== "processing" || !selectedFile) {
-      return;
-    }
-
-    const processingTimer = window.setTimeout(() => {
-      setReceipt(createMockExtractedReceipt(selectedFile.name));
-      setStep("review");
-    }, receiptProcessingDelayMs);
-
-    return () => window.clearTimeout(processingTimer);
-  }, [selectedFile, step]);
 
   return {
     confirmReceipt,
@@ -86,5 +101,6 @@ export function useReceiptScanFlow() {
     selectedFile,
     startProcessing,
     step,
+    uploadProgress,
   };
 }

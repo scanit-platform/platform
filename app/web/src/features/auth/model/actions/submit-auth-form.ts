@@ -89,7 +89,17 @@ export async function submitAuthForm(
         confirmPassword,
       });
 
-      redirectPath = `/check-email?email=${encodeURIComponent(email)}`;
+      const response = await login({ email, password });
+      const tokenErrorMessage = await storeAuthToken(response);
+
+      if (tokenErrorMessage) {
+        return {
+          ...initialAuthState,
+          message: tokenErrorMessage,
+        };
+      }
+
+      redirectPath = "/dashboard?mode=signup";
     } else {
       const response = await login({ email, password });
       const tokenErrorMessage = await storeAuthToken(response);

@@ -1,6 +1,5 @@
 package com.scanit.security;
 
-import com.scanit.auth.repository.EmailVerificationTokenRepository;
 import com.scanit.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,12 +40,8 @@ class SecurityProdProfileIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private EmailVerificationTokenRepository emailVerificationTokenRepository;
-
     @BeforeEach
     void cleanDatabase() {
-        emailVerificationTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -63,7 +58,7 @@ class SecurityProdProfileIntegrationTest {
                         .content(registerPayload("prod@example.com")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value("prod@example.com"))
-                .andExpect(jsonPath("$.status").value("pending_verification"))
+                .andExpect(jsonPath("$.status").value("active"))
                 .andExpect(jsonPath("$.token").doesNotExist());
     }
 

@@ -1,5 +1,5 @@
 import { ReceiptReviewCard } from "@/src/entities/receipt/ui/receipt-review-card";
-import type { ExtractedReceipt } from "@/src/entities/receipt/types/receipt";
+import type { Receipt } from "@/src/entities/receipt/types/receipt";
 import { Button } from "@/src/shared/ui/button/button";
 import { CheckIcon, RefreshIcon } from "@/src/shared/ui/icons/icons";
 
@@ -7,7 +7,7 @@ type ReceiptReviewStepProps = {
   isConfirmed: boolean;
   onConfirm: () => void;
   onReset: () => void;
-  receipt: ExtractedReceipt | null;
+  receipt: Receipt | null;
 };
 
 export function ReceiptReviewStep({
@@ -24,7 +24,7 @@ export function ReceiptReviewStep({
     <div className="mx-auto max-w-3xl">
       {isConfirmed ? (
         <div className="mb-4 rounded-lg border border-[var(--scanit-primary-softer)] bg-[var(--scanit-primary-soft)] px-4 py-3 text-sm font-semibold text-[var(--scanit-primary)]">
-          Receipt confirmed locally.
+          Receipt uploaded and saved.
         </div>
       ) : null}
 
@@ -47,7 +47,7 @@ export function ReceiptReviewStep({
           type="button"
         >
           <CheckIcon />
-          {isConfirmed ? "Receipt Confirmed" : "Confirm Receipt"}
+          {isConfirmed ? "Saved" : "Done"}
         </Button>
       </div>
     </div>

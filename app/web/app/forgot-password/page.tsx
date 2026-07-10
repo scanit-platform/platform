@@ -1,24 +1,42 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { apiFetch } from "@/src/shared/api/client";
 import { Input } from "@/src/shared/ui/input/input";
 
 type ForgotPasswordPageProps = {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default function ForgotPasswordPage({ searchParams }: ForgotPasswordPageProps) {
-  const email = searchParams?.email as string | undefined;
-  const status = searchParams?.status as string | undefined;
+async function forgotPasswordAction(formData: FormData) {
+  "use server";
+
+  const email = String(formData.get("email") ?? "").trim();
+
+  await apiFetch("/api/v1/password-reset-request/forgot-password", {
+    body: JSON.stringify({ email }),
+    method: "POST",
+  });
+
+  redirect(`/forgot-password?status=success&email=${encodeURIComponent(email)}`);
+}
+
+export default async function ForgotPasswordPage({
+  searchParams,
+}: ForgotPasswordPageProps) {
+  const params = await searchParams;
+  const email = params.email as string | undefined;
+  const status = params.status as string | undefined;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--scanit-background)]">
-      <div className="w-full max-w-md rounded-lg bg-[var(--scanit-card)] p-8 shadow-md">
+    <div className="scanit-auth-shell flex min-h-screen flex-col items-center justify-center px-5 py-10">
+      <div className="scanit-auth-card w-full max-w-md p-8">
         <h1 className="mb-6 text-center text-2xl font-bold text-[var(--scanit-text)]">Forgot Password</h1>
         {status === "success" ? (
           <div className="text-center text-green-600">
             If an account with the email <strong>{email}</strong> exists, a password reset link has been sent.
           </div>
         ) : (
-          <form method="POST" action="/api/auth/forgot-password">
+          <form action={forgotPasswordAction}>
            <div className="animate-[auth-field-enter_320ms_cubic-bezier(0.16,1,0.3,1)]">
                                <Input
                                    autoComplete="email"
