@@ -11,20 +11,24 @@ import software.amazon.awssdk.services.textract.TextractClient;
 
 @Configuration
 public class TextractConfig {
-    @Value("${spring.cloud.aws.region.static}")
-    private String region;
-    
-    @Value("${spring.cloud.aws.credentials.access-key}")
-    private String accessKey;
-    
-    @Value("${spring.cloud.aws.credentials.secret-key}")
-    private String secretKey;
+    private final String region;
+    private final String accessKey;
+    private final String secretKey;
+
+    public TextractConfig(
+            @Value("${spring.cloud.aws.region.static}") String region,
+            @Value("${spring.cloud.aws.credentials.access-key}") String accessKey,
+            @Value("${spring.cloud.aws.credentials.secret-key}") String secretKey) {
+        this.region = region;
+        this.accessKey = accessKey;
+        this.secretKey = secretKey;
+    }
     
     @Bean
     public TextractClient textractClient() {
         return TextractClient.builder()
-        .region(Region.of(region))
-        .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
-        .build();
+                .region(Region.of(region))
+                .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey)))
+                .build();
     }
 }

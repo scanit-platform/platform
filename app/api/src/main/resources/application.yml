@@ -36,25 +36,22 @@ spring:
   cloud:
     aws:
       credentials:
-        access-key: ${AWS_ACCESS_KEY_ID}
-        secret-key: ${AWS_SECRET_ACCESS_KEY}
+        access-key: ${AWS_ACCESS_KEY_ID:local-access-key}
+        secret-key: ${AWS_SECRET_ACCESS_KEY:local-secret-key}
       region:
-        static: ${AWS_REGION}
+        static: ${AWS_REGION:eu-west-1}
       ses:
-        from: no-reply@scanit.com
+        from: ${APP_EMAIL_FROM:noreply@scanit.com}
       s3:
-        receipts-bucket: ${AWS_S3_RECEIPT_BUCKET}
-        bucket: scanit-receipt-images-s3-bucket-650539478336-eu-west-1-an
-        access-key: ${AWS_ACCESS_KEY}
-        secret-key: ${AWS_SECRET_KEY}
-        region: eu-west-1
+        receipts-bucket: ${AWS_S3_RECEIPT_BUCKET:local-receipts-bucket}
   servlet:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
 app:
   email:
-    from: noreply@scanit.com
+    from: ${APP_EMAIL_FROM:noreply@scanit.com}
+    delivery-enabled: ${APP_EMAIL_DELIVERY_ENABLED:false}
   base-url: ${BASE_URL:http://localhost:3000}
   categories:
     max-name-length: ${APP_CATEGORIES_MAX_NAME_LENGTH:100}

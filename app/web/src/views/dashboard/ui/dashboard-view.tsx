@@ -1,4 +1,3 @@
-import { createElement } from "react";
 import { getAuthenticatedUser } from "@/src/features/auth/model/session";
 import { DashboardOverview } from "@/src/widgets/dashboard-overview/ui/dashboard-overview";
 
@@ -9,8 +8,5 @@ type DashboardViewProps = {
 export async function DashboardView({ mode }: DashboardViewProps) {
   const user = await getAuthenticatedUser();
 
-  return createElement(DashboardOverview, {
-    mode,
-    user,
-  });
+  return <DashboardOverview mode={mode} user={user} />;
 }

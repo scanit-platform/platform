@@ -22,7 +22,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.datasource.username=sa",
         "spring.datasource.password=",
         "app.security.jwt.secret=test-signing-secret-key-with-32-bytes",
-        "app.security.jwt.expiration=24h"
+        "app.security.jwt.expiration=24h",
+        "app.base-url=http://localhost:3000",
+        "spring.cloud.aws.credentials.access-key=test-access-key",
+        "spring.cloud.aws.credentials.secret-key=test-secret-key",
+        "spring.cloud.aws.region.static=eu-west-1",
+        "spring.cloud.aws.s3.receipts-bucket=test-receipts",
+        "spring.cloud.aws.ses.from=test@example.com",
+        "app.email.from=test@example.com",
+        "app.email.delivery-enabled=false"
 })
 @ActiveProfiles("prod")
 @AutoConfigureMockMvc

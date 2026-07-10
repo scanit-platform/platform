@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 public class VerificationEmailService {
     private final String webBaseUrl;
 
-    public VerificationEmailService(@Value("${app.web.base-url:http://localhost:3000}") String webBaseUrl) {
+    public VerificationEmailService(@Value("${app.base-url:http://localhost:3000}") String webBaseUrl) {
         this.webBaseUrl = webBaseUrl.replaceAll("/+$", "");
     }
 
