@@ -1,6 +1,7 @@
 type JsonRecord = Record<string, unknown>;
 
 type ApiFetchOptions = {
+  authToken?: string;
   getErrorMessage?: (status: number, payload: unknown) => string | undefined;
 };
 
@@ -14,14 +15,28 @@ export class ApiError extends Error {
   }
 }
 
-function getApiBaseUrl() {
-  const apiUrl = process.env.VITE_API_URL?.trim();
-
-  if (!apiUrl) {
-    throw new ApiError("API URL is not configured. Set VITE_API_URL.");
-  }
+export function getApiBaseUrl() {
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL?.trim() ||
+    process.env.API_URL?.trim() ||
+    "http://localhost:8080";
 
   return apiUrl.replace(/\/+$/, "");
+}
+
+export function getApiRequestUrl(path: string) {
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+
+  if (
+    typeof window !== "undefined" &&
+    (path.startsWith("/api/") || path.startsWith("/auth/"))
+  ) {
+    return path;
+  }
+
+  return `${getApiBaseUrl()}${path}`;
 }
 
 function isJsonRecord(value: unknown): value is JsonRecord {
@@ -83,18 +98,24 @@ async function readJson(response: Response) {
 
 export async function apiFetch<TResponse>(
   path: string,
-  init: RequestInit,
+  init: RequestInit = {},
   options: ApiFetchOptions = {},
 ): Promise<TResponse> {
   let response: Response;
+  const headers = new Headers(init.headers);
+
+  if (!(init.body instanceof FormData) && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  if (options.authToken && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${options.authToken}`);
+  }
 
   try {
-    response = await fetch(`${getApiBaseUrl()}${path}`, {
+    response = await fetch(getApiRequestUrl(path), {
       ...init,
-      headers: {
-        "Content-Type": "application/json",
-        ...init.headers,
-      },
+      headers,
       cache: "no-store",
     });
   } catch {
@@ -114,4 +135,20 @@ export async function apiFetch<TResponse>(
   }
 
   return payload as TResponse;
+}
+
+export function createQueryString(
+  params: Record<string, string | number | null | undefined>,
+) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== null && value !== undefined && value !== "") {
+      searchParams.set(key, String(value));
+    }
+  });
+
+  const queryString = searchParams.toString();
+
+  return queryString ? `?${queryString}` : "";
 }

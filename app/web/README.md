@@ -8,7 +8,7 @@ This README is written for teammates who already know React but have not worked 
 
 ```bash
 npm install
-printf 'VITE_API_URL=http://localhost:8080\n' > .env
+printf 'NEXT_PUBLIC_API_URL=http://localhost:8080\n' > .env
 npm run dev
 ```
 
@@ -29,7 +29,7 @@ npx tsc --noEmit # TypeScript check
 The frontend reads the backend base URL from:
 
 ```env
-VITE_API_URL=http://localhost:8080
+NEXT_PUBLIC_API_URL=http://localhost:8080
 ```
 
 Local backend:
@@ -345,4 +345,3 @@ Avoid vague folders like `utils`, `components`, or `helpers` unless the code is 
 - `npm run lint` passes.
 - `npx tsc --noEmit` passes.
 - `npm run build` passes for route/type issues.
-

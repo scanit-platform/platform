@@ -4,8 +4,7 @@ import { ApiError } from "@/src/shared/api/client";
 import { getCurrentUser } from "@/src/entities/user/api/get-current-user";
 import type { User } from "@/src/entities/user/types/user";
 import type { AuthResponse } from "@/src/features/auth/types/auth";
-
-const authTokenCookieName = "scanit_auth_token";
+import { authTokenCookieName } from "@/src/features/auth/model/auth-cookie";
 
 export async function storeAuthToken(response: AuthResponse) {
   if (!response.token) {

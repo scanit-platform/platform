@@ -6,8 +6,12 @@ import { ReceiptScanStepper } from "@/src/features/receipt-scan/ui/receipt-scan-
 import { ReceiptUploadStep } from "@/src/features/receipt-scan/ui/receipt-upload-step";
 import { useReceiptScanFlow } from "@/src/features/receipt-scan/model/use-receipt-scan-flow";
 
-export function ReceiptScanFlow() {
-  const scanFlow = useReceiptScanFlow();
+type ReceiptScanFlowProps = {
+  userId?: number;
+};
+
+export function ReceiptScanFlow({ userId }: ReceiptScanFlowProps) {
+  const scanFlow = useReceiptScanFlow(userId);
 
   return (
     <div>
@@ -23,7 +27,10 @@ export function ReceiptScanFlow() {
         ) : null}
 
         {scanFlow.step === "processing" ? (
-          <ReceiptProcessingStep selectedFile={scanFlow.selectedFile} />
+          <ReceiptProcessingStep
+            progress={scanFlow.uploadProgress}
+            selectedFile={scanFlow.selectedFile}
+          />
         ) : null}
 
         {scanFlow.step === "review" ? (

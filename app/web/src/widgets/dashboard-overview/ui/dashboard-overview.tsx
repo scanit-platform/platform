@@ -1,53 +1,31 @@
 import Link from "next/link";
+import type { BudgetLimit } from "@/src/entities/budget/types/budget";
+import type {
+  CustomCategory,
+  GeneralCategory,
+} from "@/src/entities/category/types/category";
+import type { Receipt } from "@/src/entities/receipt/types/receipt";
 import type { User } from "@/src/entities/user/types/user";
+import { PlusIcon, ReceiptIcon } from "@/src/shared/ui/icons/icons";
 import { AppShell } from "@/src/widgets/app-shell/ui/app-shell";
 
 type DashboardOverviewProps = {
+  budgets: BudgetLimit[];
+  customCategories: CustomCategory[];
+  generalCategories: GeneralCategory[];
   mode?: string | string[];
+  receipts: Receipt[];
   user: User | null;
 };
 
-const metrics = [
-  {
-    label: "Total Spent",
-    value: "$2,847.50",
-    detail: "vs $2,542 last month",
-    badge: "+12%",
-    badgeTone: "danger",
-  },
-  {
-    label: "Budget Remaining",
-    value: "$1,152.50",
-    detail: "of $4,000 this month",
-    badge: "68%",
-    badgeTone: "success",
-  },
-  {
-    label: "Days Remaining",
-    value: "18",
-    detail: "of 31 days in May",
-  },
-];
-
-const spendingBars = [
-  { label: "Groceries", height: "72%", value: "$920" },
-  { label: "Dining", height: "44%", value: "$420" },
-  { label: "Travel", height: "58%", value: "$610" },
-  { label: "Utilities", height: "35%", value: "$265" },
-  { label: "Office", height: "49%", value: "$390" },
-  { label: "Other", height: "31%", value: "$242" },
-];
-
-const transactions = [
-  { merchant: "Tesco Express", amount: "$46.20", category: "Groceries" },
-  { merchant: "Luas Travel", amount: "$12.80", category: "Transport" },
-  { merchant: "The Green Cafe", amount: "$18.40", category: "Dining" },
-  { merchant: "Office Supplies", amount: "$86.90", category: "Work" },
-];
+const moneyFormatter = new Intl.NumberFormat("en-US", {
+  currency: "USD",
+  style: "currency",
+});
 
 function getStatusMessage(mode: string | string[] | undefined, isGuest: boolean) {
   if (isGuest) {
-    return "Guest mode uses sample data. Create an account or sign in before adding real receipts so your workspace can be saved.";
+    return "Sign in before adding real receipts so your workspace can be saved.";
   }
 
   if (mode === "signin") {
@@ -61,8 +39,121 @@ function getStatusMessage(mode: string | string[] | undefined, isGuest: boolean)
   return "Your ScanIt workspace is connected to your account.";
 }
 
-export function DashboardOverview({ mode, user }: DashboardOverviewProps) {
+function getCurrentPeriod() {
+  return new Date().toISOString().slice(0, 7);
+}
+
+function getDaysRemainingInMonth() {
+  const now = new Date();
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  return Math.max(endOfMonth.getDate() - now.getDate(), 0);
+}
+
+function getReceiptAmount(receipt: Receipt) {
+  return receipt.totalAmount ?? receipt.transactionAmount ?? 0;
+}
+
+function isReceiptInCurrentPeriod(receipt: Receipt) {
+  return receipt.transactionDate.startsWith(getCurrentPeriod());
+}
+
+function getCategoryLabel(
+  receipt: Receipt,
+  generalCategories: GeneralCategory[],
+  customCategories: CustomCategory[],
+) {
+  const customCategory = customCategories.find(
+    (category) => category.id === receipt.customCategoryId,
+  );
+
+  if (customCategory) {
+    return customCategory.name;
+  }
+
+  return (
+    generalCategories.find((category) => category.id === receipt.generalCategoryId)
+      ?.name ?? "Uncategorized"
+  );
+}
+
+function buildSpendingBars(
+  receipts: Receipt[],
+  generalCategories: GeneralCategory[],
+) {
+  const totalsByCategory = new Map<string, number>();
+
+  receipts.filter(isReceiptInCurrentPeriod).forEach((receipt) => {
+    const categoryId = receipt.generalCategoryId ?? "uncategorized";
+    totalsByCategory.set(
+      categoryId,
+      (totalsByCategory.get(categoryId) ?? 0) + getReceiptAmount(receipt),
+    );
+  });
+
+  const rows = [...totalsByCategory.entries()]
+    .map(([categoryId, total]) => ({
+      label:
+        generalCategories.find((category) => category.id === categoryId)?.name ??
+        "Uncategorized",
+      total,
+    }))
+    .sort((left, right) => right.total - left.total)
+    .slice(0, 6);
+
+  const maxTotal = Math.max(...rows.map((row) => row.total), 1);
+
+  return rows.map((row) => ({
+    ...row,
+    height: `${Math.max((row.total / maxTotal) * 100, 8)}%`,
+  }));
+}
+
+export function DashboardOverview({
+  budgets,
+  customCategories,
+  generalCategories,
+  mode,
+  receipts,
+  user,
+}: DashboardOverviewProps) {
   const isGuest = !user;
+  const monthlyReceipts = receipts.filter(isReceiptInCurrentPeriod);
+  const totalSpent = monthlyReceipts.reduce(
+    (total, receipt) => total + getReceiptAmount(receipt),
+    0,
+  );
+  const totalBudget = budgets.reduce(
+    (total, budget) => total + Number(budget.monthlyLimit),
+    0,
+  );
+  const remainingBudget = totalBudget - totalSpent;
+  const spendingBars = buildSpendingBars(receipts, generalCategories);
+  const recentReceipts = [...receipts]
+    .sort((left, right) => right.transactionDate.localeCompare(left.transactionDate))
+    .slice(0, 4);
+
+  const metrics = [
+    {
+      detail: `${monthlyReceipts.length} receipts this month`,
+      label: "Total Spent",
+      value: moneyFormatter.format(totalSpent),
+    },
+    {
+      detail:
+        totalBudget > 0
+          ? `of ${moneyFormatter.format(totalBudget)} this month`
+          : "No budget set",
+      label: "Budget Remaining",
+      tone: remainingBudget < 0 ? "danger" : "success",
+      value: moneyFormatter.format(remainingBudget),
+    },
+    {
+      detail: "in the current month",
+      label: "Days Remaining",
+      value: String(getDaysRemainingInMonth()),
+    },
+  ];
 
   return (
     <AppShell activeItem="dashboard" user={user}>
@@ -71,7 +162,7 @@ export function DashboardOverview({ mode, user }: DashboardOverviewProps) {
           <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
             <div>
               <p className="text-sm font-semibold text-[var(--scanit-primary)]">
-                {isGuest ? "Sample workspace" : user.email}
+                {isGuest ? "Guest workspace" : user.email}
               </p>
               <h1 className="mt-1 font-serif text-[28px] font-bold text-[var(--scanit-text)]">
                 Dashboard
@@ -106,27 +197,62 @@ export function DashboardOverview({ mode, user }: DashboardOverviewProps) {
             {getStatusMessage(mode, isGuest)}
           </div>
 
+          <div className="mb-6 grid gap-4 md:grid-cols-2">
+            <Link
+              className="scanit-auth-card group flex min-h-36 items-center justify-between gap-5 p-5 transition-colors hover:border-[var(--scanit-primary)]"
+              href={isGuest ? "/login?mode=signin" : "/dashboard/scan"}
+            >
+              <div>
+                <span className="scanit-auth-icon-tile mb-4 flex h-11 w-11 items-center justify-center">
+                  <ReceiptIcon />
+                </span>
+                <h2 className="font-serif text-2xl font-bold text-[var(--scanit-text)]">
+                  Scan Receipt
+                </h2>
+                <p className="mt-2 text-sm text-[var(--scanit-text-secondary)]">
+                  Upload an image or PDF and save the receipt to your account.
+                </p>
+              </div>
+              <span className="scanit-btn scanit-btn-cta h-11 shrink-0">
+                Start
+              </span>
+            </Link>
+
+            <Link
+              className="scanit-auth-card group flex min-h-36 items-center justify-between gap-5 p-5 transition-colors hover:border-[var(--scanit-primary)]"
+              href={isGuest ? "/login?mode=signin" : "/dashboard/entry"}
+            >
+              <div>
+                <span className="scanit-auth-icon-tile mb-4 flex h-11 w-11 items-center justify-center">
+                  <PlusIcon />
+                </span>
+                <h2 className="font-serif text-2xl font-bold text-[var(--scanit-text)]">
+                  Add Entry
+                </h2>
+                <p className="mt-2 text-sm text-[var(--scanit-text-secondary)]">
+                  Create a manual receipt or expense entry from a short form.
+                </p>
+              </div>
+              <span className="scanit-btn scanit-btn-primary h-11 shrink-0">
+                Add
+              </span>
+            </Link>
+          </div>
+
           <div className="grid gap-5 lg:grid-cols-3">
             {metrics.map((metric) => (
               <article key={metric.label} className="scanit-auth-card p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <p className="text-sm font-medium text-[var(--scanit-label)]">
-                    {metric.label}
-                  </p>
-                  {metric.badge ? (
-                    <span
-                      className={[
-                        "rounded-full px-3 py-1 text-xs font-bold",
-                        metric.badgeTone === "danger"
-                          ? "text-[var(--scanit-danger)]"
-                          : "bg-[var(--scanit-primary-softer)] text-[var(--scanit-primary)]",
-                      ].join(" ")}
-                    >
-                      {metric.badge}
-                    </span>
-                  ) : null}
-                </div>
-                <p className="mt-4 font-serif text-4xl font-bold text-[var(--scanit-text)]">
+                <p className="text-sm font-medium text-[var(--scanit-label)]">
+                  {metric.label}
+                </p>
+                <p
+                  className={[
+                    "mt-4 font-serif text-4xl font-bold",
+                    metric.tone === "danger"
+                      ? "text-[var(--scanit-danger)]"
+                      : "text-[var(--scanit-text)]",
+                  ].join(" ")}
+                >
                   {metric.value}
                 </p>
                 <p className="mt-2 text-sm text-[var(--scanit-text-secondary)]">
@@ -143,30 +269,36 @@ export function DashboardOverview({ mode, user }: DashboardOverviewProps) {
                   Monthly Spending
                 </h2>
                 <span className="rounded-lg border border-[var(--scanit-border)] bg-[var(--scanit-soft)] px-4 py-2 text-sm font-medium">
-                  May 2025
+                  {getCurrentPeriod()}
                 </span>
               </div>
-              <div className="grid min-h-72 grid-cols-6 items-end gap-3">
-                {spendingBars.map((bar) => (
-                  <div
-                    key={bar.label}
-                    className="flex h-72 flex-col items-center justify-end gap-2"
-                  >
-                    <p className="text-xs font-semibold text-[var(--scanit-label)]">
-                      {bar.value}
-                    </p>
-                    <div className="flex h-52 w-full items-end rounded-lg bg-[var(--scanit-soft)] p-1">
-                      <div
-                        className="w-full rounded-md bg-[var(--scanit-primary)]"
-                        style={{ height: bar.height }}
-                      />
+              {spendingBars.length > 0 ? (
+                <div className="grid min-h-72 grid-cols-2 items-end gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                  {spendingBars.map((bar) => (
+                    <div
+                      key={bar.label}
+                      className="flex h-72 flex-col items-center justify-end gap-2"
+                    >
+                      <p className="text-xs font-semibold text-[var(--scanit-label)]">
+                        {moneyFormatter.format(bar.total)}
+                      </p>
+                      <div className="flex h-52 w-full items-end rounded-lg bg-[var(--scanit-soft)] p-1">
+                        <div
+                          className="w-full rounded-md bg-[var(--scanit-primary)]"
+                          style={{ height: bar.height }}
+                        />
+                      </div>
+                      <p className="max-w-full truncate text-xs text-[var(--scanit-text-secondary)]">
+                        {bar.label}
+                      </p>
                     </div>
-                    <p className="max-w-full truncate text-xs text-[var(--scanit-text-secondary)]">
-                      {bar.label}
-                    </p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-lg border border-[var(--scanit-border)] bg-[var(--scanit-soft)] px-4 py-6 text-center text-sm text-[var(--scanit-text-secondary)]">
+                  No spending data for this month yet.
+                </p>
+              )}
             </section>
 
             <section className="scanit-auth-card p-5">
@@ -174,33 +306,35 @@ export function DashboardOverview({ mode, user }: DashboardOverviewProps) {
                 Recent Activity
               </h2>
               <div className="mt-5 space-y-3">
-                {transactions.map((transaction) => (
-                  <div
-                    key={transaction.merchant}
-                    className="flex items-center justify-between gap-4 rounded-lg border border-[var(--scanit-border)] px-4 py-3"
-                  >
-                    <div>
-                      <p className="font-semibold text-[var(--scanit-text)]">
-                        {transaction.merchant}
-                      </p>
-                      <p className="text-sm text-[var(--scanit-text-secondary)]">
-                        {transaction.category}
+                {recentReceipts.length > 0 ? (
+                  recentReceipts.map((receipt) => (
+                    <div
+                      key={receipt.id}
+                      className="flex items-center justify-between gap-4 rounded-lg border border-[var(--scanit-border)] px-4 py-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-[var(--scanit-text)]">
+                          {receipt.vendorName}
+                        </p>
+                        <p className="text-sm text-[var(--scanit-text-secondary)]">
+                          {getCategoryLabel(
+                            receipt,
+                            generalCategories,
+                            customCategories,
+                          )}
+                        </p>
+                      </div>
+                      <p className="font-serif text-lg font-bold">
+                        {moneyFormatter.format(getReceiptAmount(receipt))}
                       </p>
                     </div>
-                    <p className="font-serif text-lg font-bold">
-                      {transaction.amount}
-                    </p>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="rounded-lg border border-[var(--scanit-border)] bg-[var(--scanit-soft)] px-4 py-6 text-center text-sm text-[var(--scanit-text-secondary)]">
+                    No receipts yet.
+                  </p>
+                )}
               </div>
-              {isGuest ? (
-                <Link
-                  href="/login?mode=signup"
-                  className="scanit-btn scanit-btn-primary mt-5 h-11 w-full"
-                >
-                  Save my workspace
-                </Link>
-              ) : null}
             </section>
           </div>
         </div>

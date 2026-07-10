@@ -4,8 +4,6 @@ import com.scanit.auth.dto.AuthRequest;
 import com.scanit.auth.dto.AuthResponse;
 import com.scanit.auth.dto.RegisterRequest;
 import com.scanit.auth.dto.RegistrationResponse;
-import com.scanit.auth.model.EmailVerificationToken;
-import com.scanit.auth.repository.EmailVerificationTokenRepository;
 import com.scanit.exception.BadRequestException;
 import com.scanit.exception.ForbiddenException;
 import com.scanit.exception.InvalidCredentialsException;
@@ -27,17 +25,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Locale;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AuthService {
-    private static final long VERIFICATION_TOKEN_HOURS = 24;
-
     private final UserRepository userRepository;
-    private final EmailVerificationTokenRepository emailVerificationTokenRepository;
-    private final VerificationEmailService verificationEmailService;
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -49,16 +42,13 @@ public class AuthService {
         String normalizedEmail = normalizeEmail(request.getEmail());
         validateEmailUniqueness(normalizedEmail);
 
-        User user = createPendingUser(request, normalizedEmail);
+        User user = createActiveUser(request, normalizedEmail);
         User savedUser = userRepository.save(user);
-
-        EmailVerificationToken token = createOrReplaceVerificationToken(savedUser);
-        verificationEmailService.sendVerificationEmail(savedUser, token);
 
         return new RegistrationResponse(
                 savedUser.getEmail(),
-                "pending_verification",
-                "Account created. Check your email to verify your account."
+                "active",
+                "Account created. You can sign in now."
         );
     }
 
@@ -80,61 +70,12 @@ public class AuthService {
             );
         } catch (DisabledException ex) {
             throw new ForbiddenException(
-                    "Account is not verified. Check your email before signing in.",
+                    "Account is disabled.",
                     ex
             );
         } catch (AuthenticationException ex) {
             throw new InvalidCredentialsException("Invalid email or password", ex);
         }
-    }
-
-    @Transactional
-    public AuthResponse verifyEmail(String tokenValue) {
-        LocalDateTime now = LocalDateTime.now();
-
-        EmailVerificationToken token = emailVerificationTokenRepository.findByToken(tokenValue)
-                .orElseThrow(() -> new BadRequestException("Verification link is invalid."));
-
-        if (token.isUsed()) {
-            throw new BadRequestException("Verification link has already been used.");
-        }
-
-        if (token.isExpired(now)) {
-            throw new BadRequestException("Verification link expired. Request a new verification email.");
-        }
-
-        User user = token.getUser();
-        user.setStatus(UserStatus.ACTIVE);
-        token.setUsedAt(now);
-
-        return buildAuthResponse(
-                user.getId(),
-                user.getName(),
-                user.getEmail()
-        );
-    }
-
-    @Transactional
-    public RegistrationResponse resendVerificationEmail(String email) {
-        User user = userRepository.findByEmail(normalizeEmail(email))
-                .orElseThrow(() -> new BadRequestException("No account found for this email."));
-
-        if (user.getStatus() == UserStatus.ACTIVE) {
-            return new RegistrationResponse(
-                    user.getEmail(),
-                    "active",
-                    "This account is already verified. You can sign in."
-            );
-        }
-
-        EmailVerificationToken token = createOrReplaceVerificationToken(user);
-        verificationEmailService.sendVerificationEmail(user, token);
-
-        return new RegistrationResponse(
-                user.getEmail(),
-                "pending_verification",
-                "A new verification email has been sent."
-        );
     }
 
     public UserResponseDto getCurrentUser(UserPrincipal currentUser) {
@@ -145,7 +86,7 @@ public class AuthService {
         );
     }
 
-    private User createPendingUser(RegisterRequest request, String normalizedEmail) {
+    private User createActiveUser(RegisterRequest request, String normalizedEmail) {
         String firstName = request.getFirstName().trim();
         String lastName = request.getLastName().trim();
         String fullName = firstName + " " + lastName;
@@ -157,30 +98,9 @@ public class AuthService {
                 lastName,
                 normalizedEmail,
                 passwordEncoder.encode(request.getPassword()),
-                UserStatus.PENDING_VERIFICATION,
+                UserStatus.ACTIVE,
                 LocalDateTime.now()
         );
-    }
-
-    private EmailVerificationToken createOrReplaceVerificationToken(User user) {
-        LocalDateTime now = LocalDateTime.now();
-
-        EmailVerificationToken token = emailVerificationTokenRepository.findByUser(user)
-                .orElseGet(() -> new EmailVerificationToken(
-                        null,
-                        null,
-                        user,
-                        null,
-                        null,
-                        null
-                ));
-
-        token.setToken(UUID.randomUUID().toString());
-        token.setExpiresAt(now.plusHours(VERIFICATION_TOKEN_HOURS));
-        token.setUsedAt(null);
-        token.setCreatedAt(now);
-
-        return emailVerificationTokenRepository.save(token);
     }
 
     private void validatePasswordConfirmation(RegisterRequest request) {

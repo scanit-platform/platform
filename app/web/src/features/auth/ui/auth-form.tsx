@@ -183,8 +183,8 @@ export function AuthForm({ initialMode = "signup" }: AuthFormProps) {
 
           <p className="mt-6 text-center text-[0.75rem] leading-6 text-[var(--scanit-text-secondary)]">
             {mode === "signup"
-                ? "Guest mode uses sample data. Create an account to keep your workspace."
-                : "Guest mode uses sample data. Sign in to keep working with saved receipts."}
+                ? "Create an account to save receipts, budgets, and categories."
+                : "Sign in to keep working with saved receipts, budgets, and categories."}
             {" "}
             <Link
                 href="/dashboard"

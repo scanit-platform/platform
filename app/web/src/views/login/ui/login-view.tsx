@@ -3,9 +3,8 @@ import { AuthLayout } from "@/src/widgets/auth-layout/ui/auth-layout";
 
 type LoginViewProps = {
   initialMode?: AuthMode;
-  verified?: boolean;
 };
 
-export function LoginView({ initialMode, verified }: LoginViewProps) {
-  return <AuthLayout initialMode={initialMode} verified={verified} />;
+export function LoginView({ initialMode }: LoginViewProps) {
+  return <AuthLayout initialMode={initialMode} />;
 }

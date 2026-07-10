@@ -1,6 +1,5 @@
 package com.scanit.auth;
 
-import com.scanit.auth.repository.EmailVerificationTokenRepository;
 import com.scanit.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,12 +23,8 @@ class AuthControllerValidationIntegrationTest {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private EmailVerificationTokenRepository emailVerificationTokenRepository;
-
     @BeforeEach
     void cleanDatabase() {
-        emailVerificationTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
 

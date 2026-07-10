@@ -10,7 +10,12 @@ import {
   ReceiptIcon,
 } from "@/src/shared/ui/icons/icons";
 
-type AppShellNavItem = "dashboard" | "receipts" | "budget" | "transactions";
+type AppShellNavItem =
+  | "budget"
+  | "categories"
+  | "dashboard"
+  | "receipts"
+  | "transactions";
 
 type AppShellProps = {
   activeItem?: AppShellNavItem;
@@ -31,15 +36,22 @@ const navItems: Array<{
     label: "Dashboard",
   },
   {
-    href: "/dashboard/scan",
+    href: "/dashboard/receipts",
     icon: <ReceiptIcon size={20} />,
     id: "receipts",
     label: "Receipts",
   },
   {
+    href: "/dashboard/budget",
     icon: <ChartIcon />,
     id: "budget",
     label: "Budget",
+  },
+  {
+    href: "/dashboard/categories",
+    icon: <PlusIcon />,
+    id: "categories",
+    label: "Categories",
   },
   {
     icon: <CardIcon />,
@@ -110,10 +122,13 @@ export function AppShell({
                   <ReceiptIcon />
                   Scan Receipt
                 </Link>
-                <span className="scanit-btn scanit-btn-primary hidden h-10 sm:inline-flex">
+                <Link
+                  href="/dashboard/entry"
+                  className="scanit-btn scanit-btn-primary hidden h-10 sm:inline-flex"
+                >
                   <PlusIcon />
                   Add Entry
-                </span>
+                </Link>
                 <form action={logout}>
                   <button
                     type="submit"
