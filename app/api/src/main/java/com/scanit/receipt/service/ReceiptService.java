@@ -1,5 +1,6 @@
 package com.scanit.receipt.service;
 
+import com.scanit.receipt.dto.ReceiptUpdateRequestDTO;
 import com.scanit.receipt.model.Receipt;
 import com.scanit.receipt.dto.ReceiptDTO;
 import com.scanit.receipt.dto.ReceiptExtractRequestDTO;
@@ -15,6 +16,8 @@ public interface ReceiptService {
     Iterable<Receipt> findAll();
 
     Optional<Receipt> findById(Long id);
+
+    Receipt updateReceipt(Long id, ReceiptUpdateRequestDTO dto);
 
     void deleteByReceiptId(Long id);
 

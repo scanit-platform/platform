@@ -4,6 +4,7 @@ import com.scanit.category.service.CategoryReferenceService;
 import com.scanit.category.service.CategorySelection;
 import com.scanit.receipt.dto.ReceiptDTO;
 import com.scanit.receipt.dto.ReceiptExtractRequestDTO;
+import com.scanit.receipt.dto.ReceiptUpdateRequestDTO;
 import com.scanit.receipt.exception.ReceiptNotExtractedException;
 import com.scanit.receipt.mapper.AnalyzeExpenseResponseMapper;
 import com.scanit.receipt.mapper.ReceiptMapper;
@@ -131,6 +132,19 @@ public class ReceiptServiceImpl implements ReceiptService {
     @Override
     public void deleteByReceiptId(Long id) {
         receiptRepository.deleteById(id);
+    }
+
+    @Override
+    public Receipt updateReceipt(Long id, ReceiptUpdateRequestDTO dto) {
+        Receipt receipt = receiptRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Receipt not found: " + id));
+
+        if (dto.vendorName() != null) receipt.setVendorName(dto.vendorName());
+        if (dto.totalAmount() != null) receipt.setTotalAmount(dto.totalAmount());
+        if (dto.transactionAmount() != null) receipt.setTransactionAmount(dto.transactionAmount());
+        if (dto.transactionDate() != null) receipt.setTransactionDate(dto.transactionDate());
+
+        return receiptRepository.save(receipt);
     }
 
     @Override

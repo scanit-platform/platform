@@ -2,6 +2,7 @@ package com.scanit.receipt.controller;
 
 import com.scanit.receipt.dto.ReceiptDTO;
 import com.scanit.receipt.dto.ReceiptExtractRequestDTO;
+import com.scanit.receipt.dto.ReceiptUpdateRequestDTO;
 import com.scanit.receipt.exception.ReceiptNotFoundException;
 import com.scanit.receipt.model.Receipt;
 import com.scanit.receipt.service.ReceiptService;
@@ -72,6 +73,14 @@ public class ReceiptController {
     @DeleteMapping("/{id}")
     public void deleteById(@PathVariable Long id) {
         receiptService.deleteByReceiptId(id);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ReceiptDTO> updateReceipt(
+            @PathVariable Long id,
+            @RequestBody ReceiptUpdateRequestDTO dto) {
+        Receipt updated = receiptService.updateReceipt(id, dto);
+        return ResponseEntity.ok(toDTO(updated));
     }
 
     @PostMapping("/upload")
