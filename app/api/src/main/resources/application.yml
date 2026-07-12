@@ -4,7 +4,7 @@ spring:
   profiles:
     default: ${SPRING_PROFILES_ACTIVE:local}
   config:
-    import: optional:file:.env[.properties]
+    import: optional:file:app/api/.env[.properties]
   jpa:
     open-in-view: false
     hibernate:
@@ -36,10 +36,10 @@ spring:
   cloud:
     aws:
       credentials:
-        access-key: ${AWS_ACCESS_KEY_ID:local-access-key}
-        secret-key: ${AWS_SECRET_ACCESS_KEY:local-secret-key}
+        access-key: ${AWS_ACCESS_KEY_ID}
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
       region:
-        static: ${AWS_REGION:eu-west-1}
+        static: ${AWS_REGION}
       ses:
         from: ${APP_EMAIL_FROM:noreply@scanit.com}
       s3:

@@ -5,6 +5,7 @@ import { ReceiptReviewStep } from "@/src/features/receipt-scan/ui/receipt-review
 import { ReceiptScanStepper } from "@/src/features/receipt-scan/ui/receipt-scan-stepper";
 import { ReceiptUploadStep } from "@/src/features/receipt-scan/ui/receipt-upload-step";
 import { useReceiptScanFlow } from "@/src/features/receipt-scan/model/use-receipt-scan-flow";
+import {ValidateReceiptStep} from "@/src/features/receipt-validate-entry/ui/validate-receipt-step";
 
 type ReceiptScanFlowProps = {
   userId?: number;
@@ -33,7 +34,14 @@ export function ReceiptScanFlow({ userId }: ReceiptScanFlowProps) {
           />
         ) : null}
 
-        {scanFlow.step === "review" ? (
+          {scanFlow.step === "validate" && scanFlow.receipt ? (
+               <ValidateReceiptStep
+                          receipt={scanFlow.receipt}
+                          onScanAnother={scanFlow.resetFlow}
+                      />
+          ) : null}
+
+              {scanFlow.step === "review" ? (
           <ReceiptReviewStep
             isConfirmed={scanFlow.isConfirmed}
             onConfirm={scanFlow.confirmReceipt}
@@ -41,6 +49,9 @@ export function ReceiptScanFlow({ userId }: ReceiptScanFlowProps) {
             receipt={scanFlow.receipt}
           />
         ) : null}
+
+
+          {/**/}
       </div>
     </div>
   );

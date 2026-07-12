@@ -21,7 +21,7 @@ type ManualReceiptFormProps = {
   userId: number;
 };
 
-function todayIsoDate() {
+export function todayIsoDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
