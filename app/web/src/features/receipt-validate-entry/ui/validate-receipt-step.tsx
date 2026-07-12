@@ -28,11 +28,11 @@ onScanAnother?: () => void;
             Receipt Image
           </span>
                     {receipt.imageUrl ? (
-                        <div className="overflow-hidden rounded-xl border border-[var(--scanit-border)] bg-[var(--surface-1)]">
+                        <div className="overflow-y-auto rounded-xl border border-[var(--scanit-border)] bg-[var(--surface-1)] max-h-[50vh]">
                             <img
                                 src={receipt.imageUrl}
                                 alt={`Receipt from ${receipt.vendorName ?? "unknown vendor"}`}
-                                className="w-full object-contain max-h-80"
+                                className="w-full object-contain"
                             />
                         </div>
                     ) : (

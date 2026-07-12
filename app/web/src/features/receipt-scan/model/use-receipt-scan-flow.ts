@@ -67,7 +67,7 @@ export function useReceiptScanFlow(userId: number | undefined) {
       });
 
       setReceipt(uploadedReceipt);
-      setStep("review");
+      setStep("validate");
     } catch (error) {
       setFileError(
         error instanceof ApiError || error instanceof Error
