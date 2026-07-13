@@ -23,6 +23,8 @@ spring:
         receipts-bucket: ${AWS_S3_RECEIPT_BUCKET}
 
 app:
+  ocr:
+    mock-enabled: false
   base-url: ${BASE_URL}
   email:
     from: ${APP_EMAIL_FROM}

@@ -11,10 +11,14 @@
 
     export function ValidateReceiptStep({
                                             receipt,
-                                            onScanAnother,
+                                            onScanAnotherAction,
+                                            onVerifyAction,
+                                            onSaveAction,
                                         }: {
         receipt: Receipt;
-        onScanAnother?: () => void;
+        onScanAnotherAction?: () => void;
+        onVerifyAction?: () => void;
+        onSaveAction?: (updated: Receipt) => void;
     }) {
         const router = useRouter();
         const [vendorName, setVendorName] = useState(receipt.vendorName ?? "");
@@ -58,7 +62,10 @@
                     const body = await res.json().catch(() => ({}));
                     throw new Error(body.message ?? "Failed to save receipt.");
                 }
-                router.push(`/verify/${receipt.id}`);
+
+                const updatedReceipt = await res.json();
+                onSaveAction?.(updatedReceipt);
+                onVerifyAction?.();
 
             } catch (err) {
                 setError(
@@ -109,27 +116,27 @@
           <span className="text-[0.75rem] font-medium text-[var(--scanit-text-muted)] uppercase tracking-wide">
             Receipt Data
           </span>
-                <div className={"flex flex-row gap-3 justify-evenly"}>
+                <div className={"flex flex-row gap-3 justify-left"}>
                     <ReceiptField label="Scanned Vendor" value={receipt.vendorName} />
                     <Input
                         label="Update Vendor"
                         name="vendorName"
-                        //onChange={(event) => setVendorName(event.target.value)}
+                        onChange={(event) => setVendorName(event.target.value)}
                         placeholder="Supervalu"
-                       // value={vendorName}
+                        value={vendorName}
                     />
                 </div>
 
-                    <div className={"flex flex-row gap-3 justify-evenly"}>
+                    <div className={"flex flex-row gap-3 justify-left"}>
                     <ReceiptField
-                        label="Total amount"
+                        label="Scanned Total amount"
                         value={receipt.totalAmount != null
                             ? `€${Number(receipt.totalAmount).toFixed(2)}`
                             : null}
                     />
                         <Input
                             inputMode="decimal"
-                            label="Total amount"
+                            label="Update Total amount"
                             min="0"
                             name="totalAmount"
                             onChange={(event) => setTotalAmount(event.target.value)}
@@ -140,16 +147,16 @@
                         />
                     </div>
 
-                    <div className={"flex flex-row gap-3 justify-evenly"}>
+                    <div className={"flex flex-row gap-3 justify-left"}>
                     <ReceiptField
-                        label="Transaction amount"
+                        label="Scanned Transaction amount"
                         value={receipt.transactionAmount != null
                             ? `€${Number(receipt.transactionAmount).toFixed(2)}`
                             : null}
                     />
                         <Input
                             inputMode="decimal"
-                            label="Subtotal"
+                            label="Update Transaction amount"
                             min="0"
                             name="transactionAmount"
                             onChange={(event) => setTransactionAmount(event.target.value)}
@@ -159,14 +166,15 @@
                             value={transactionAmount}
                         />
                     </div>
-                    <div className={"flex flex-row gap-3 justify-evenly"}>
-                    <ReceiptField label="Date" value={receipt.transactionDate} />
-                        <Input
-                            label="Date"
+                    <div className={"flex flex-row gap-3 justify-left"}>
+                    <ReceiptField label="Scanned Date" value={formatDisplayDate(receipt.transactionDate)} />
+                        <Input className={"justify-end"}
+                            label="Updated Date"
                             name="transactionDate"
                             onChange={(event) => setTransactionDate(event.target.value)}
                             type="date"
                             value={transactionDate}
+                            placeholder="13-07-2026"
                         />
                     </div>
 
@@ -185,9 +193,9 @@
 
             {/* Action buttons */}
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end pt-2">
-                {onScanAnother && (
+                {onScanAnotherAction && (
                     <button
-                        onClick={onScanAnother}
+                        onClick={onScanAnotherAction}
                         className="scanit-btn scanit-btn-secondary h-11 w-full sm:w-auto"
                     >
                         Scan another
@@ -222,10 +230,10 @@ function ReceiptField({
     const hasValue = value != null && value !== "";
     return (
         <div className="flex flex-col gap-1">
-      <span className="text-[0.75rem] font-medium text-[var(--scanit-label)]">
-        {label}
-      </span>
-            <div className={`rounded-lg border px-3 py-2 text-[0.875rem] ${
+            <span className="text-[0.8rem] px-2 py-1 font-medium text-[var(--scanit-label)]">
+             {label}
+            </span>
+            <div className={`grow rounded-lg border  px-3 py-2 ${
                 hasValue
                     ? "border-[var(--scanit-border)] bg-[var(--surface-1)] text-[var(--scanit-text)]"
                     : "border-red-200 bg-red-50 text-red-400"
@@ -234,4 +242,11 @@ function ReceiptField({
             </div>
         </div>
     );
+}
+
+function formatDisplayDate(dateStr: string | null | undefined): string | null {
+        if (!dateStr) return null;
+        const [year, month, day] = dateStr.split("-");
+        if (!year || !month || !day) return dateStr;
+        return `${day}/${month}/${year}`;
 }

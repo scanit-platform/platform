@@ -7,6 +7,7 @@ type ReceiptReviewStepProps = {
   isConfirmed: boolean;
   onConfirm: () => void;
   onReset: () => void;
+  onBackAction: () => void;
   receipt: Receipt | null;
 };
 
@@ -14,6 +15,7 @@ export function ReceiptReviewStep({
   isConfirmed,
   onConfirm,
   onReset,
+    onBackAction,
   receipt,
 }: ReceiptReviewStepProps) {
   if (!receipt) {
@@ -31,6 +33,14 @@ export function ReceiptReviewStep({
       <ReceiptReviewCard receipt={receipt} />
 
       <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button
+            className="h-11 w-full px-4 sm:w-auto"
+            onClick={onBackAction}
+            type="button"
+            variant="secondary"
+        >
+          ← Back to Verify
+        </Button>
         <Button
           className="h-11 w-full px-4 sm:w-auto"
           onClick={onReset}

@@ -49,6 +49,9 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 app:
+  ocr:
+    mock-enabled: true
+
   email:
     from: ${APP_EMAIL_FROM:noreply@scanit.com}
     delivery-enabled: ${APP_EMAIL_DELIVERY_ENABLED:false}

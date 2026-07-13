@@ -9,6 +9,6 @@ public record ReceiptUpdateRequestDTO (
         String vendorName,
         BigDecimal totalAmount,
         BigDecimal transactionAmount,
-        @JsonFormat(pattern = "dd-MM-yyyy")
+        @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDate transactionDate
 ) {}

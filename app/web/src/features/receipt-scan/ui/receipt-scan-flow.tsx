@@ -37,7 +37,9 @@ export function ReceiptScanFlow({ userId }: ReceiptScanFlowProps) {
           {scanFlow.step === "validate" && scanFlow.receipt ? (
                <ValidateReceiptStep
                           receipt={scanFlow.receipt}
-                          onScanAnother={scanFlow.resetFlow}
+                          onScanAnotherAction={scanFlow.resetFlow}
+                          onVerifyAction={() => scanFlow.setStep("review")}
+                          onSaveAction={(updated) => scanFlow.setUpdatedReceipt(updated)}
                       />
           ) : null}
 
@@ -46,12 +48,10 @@ export function ReceiptScanFlow({ userId }: ReceiptScanFlowProps) {
             isConfirmed={scanFlow.isConfirmed}
             onConfirm={scanFlow.confirmReceipt}
             onReset={scanFlow.resetFlow}
-            receipt={scanFlow.receipt}
+            onBackAction={() => scanFlow.setStep("validate")}
+            receipt={scanFlow.updatedReceipt ?? scanFlow.receipt}
           />
         ) : null}
-
-
-          {/**/}
       </div>
     </div>
   );

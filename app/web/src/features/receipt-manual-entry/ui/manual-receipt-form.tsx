@@ -143,10 +143,10 @@ export function ManualReceiptForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Input
-          label="Merchant"
+          label="Vendor"
           name="vendorName"
           onChange={(event) => setVendorName(event.target.value)}
-          placeholder="Walmart"
+          placeholder="Supervalu"
           value={vendorName}
         />
         <Input

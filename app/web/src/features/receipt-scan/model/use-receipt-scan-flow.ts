@@ -91,6 +91,8 @@ export function useReceiptScanFlow(userId: number | undefined) {
     setIsConfirmed(true);
   }, []);
 
+  const [updatedReceipt, setUpdatedReceipt] = useState<Receipt | null>(null);
+
   return {
     confirmReceipt,
     fileError,
@@ -102,5 +104,8 @@ export function useReceiptScanFlow(userId: number | undefined) {
     startProcessing,
     step,
     uploadProgress,
+    setStep,
+    updatedReceipt,
+    setUpdatedReceipt
   };
 }

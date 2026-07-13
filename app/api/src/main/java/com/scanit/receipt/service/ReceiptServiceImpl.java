@@ -23,6 +23,7 @@ import software.amazon.awssdk.services.textract.model.AnalyzeExpenseResponse;
 import software.amazon.awssdk.services.textract.model.Document;
 import software.amazon.awssdk.services.textract.model.S3Object;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -192,12 +193,26 @@ public class ReceiptServiceImpl implements ReceiptService {
         return receiptMapper.toDTO(receipt);
     }
 
+    @Value("${app.ocr.mock-enabled:false}")
+    private boolean mockOcrEnabled;
+
     @Override
     @Transactional
     public ReceiptDTO extractAndUpdate(Long receiptId, ReceiptExtractRequestDTO dto) {
 
         Receipt existing = receiptRepository.findById(receiptId)
                 .orElseThrow(() -> new IllegalArgumentException("Receipt Not Found: " + receiptId));
+
+        if (mockOcrEnabled) {
+
+            existing.setVendorName("Lidl");
+            existing.setTotalAmount(new BigDecimal("42.99"));
+            existing.setTransactionAmount(new BigDecimal("38.99"));
+            existing.setTransactionDate(LocalDate.now());
+            existing.setOcrStatus(OCRStatus.COMPLETED);
+            existing = receiptRepository.save(existing);
+            return receiptMapper.toDTO(existing);
+        }
 
         AnalyzeExpenseRequest request = AnalyzeExpenseRequest.builder()
                 .document(Document.builder()
