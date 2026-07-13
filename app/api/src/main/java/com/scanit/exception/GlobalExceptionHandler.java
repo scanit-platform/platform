@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.stream.Collectors;
 
@@ -58,6 +59,18 @@ public class GlobalExceptionHandler {
                 .map(violation -> violation.getMessage())
                 .collect(Collectors.joining("; "));
         return buildResponse(HttpStatus.BAD_REQUEST, message, request);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(
+            MaxUploadSizeExceededException ex,
+            WebRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                "The file is too large. Maximum size is 10 MB. Please choose a smaller file and try again.",
+                request
+        );
     }
 
     @ExceptionHandler(Throwable.class)
