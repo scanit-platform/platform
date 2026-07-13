@@ -116,6 +116,16 @@ public class ReceiptServiceImpl implements ReceiptService {
 
         Receipt saved = receiptRepository.save(receipt);
 
+        try {
+            extractAndUpdate(saved.getId(), new ReceiptExtractRequestDTO(
+                    userId,
+                    extractKeyFromUrl(saved.getImageUrl())
+            ));
+        } catch (ReceiptNotExtractedException e) {
+            saved.setOcrStatus(OCRStatus.FAILED);
+            receiptRepository.save(saved);
+        }
+
         return receiptMapper.toDTO(saved);
     }
 
@@ -181,6 +191,49 @@ public class ReceiptServiceImpl implements ReceiptService {
 
         return receiptMapper.toDTO(receipt);
     }
+
+    @Override
+    @Transactional
+    public ReceiptDTO extractAndUpdate(Long receiptId, ReceiptExtractRequestDTO dto) {
+
+        Receipt existing = receiptRepository.findById(receiptId)
+                .orElseThrow(() -> new IllegalArgumentException("Receipt Not Found: " + receiptId));
+
+        AnalyzeExpenseRequest request = AnalyzeExpenseRequest.builder()
+                .document(Document.builder()
+                        .s3Object(S3Object.builder()
+                                .bucket(receiptsBucket)
+                                .name(dto.key())
+                                .build())
+                        .build())
+                .build();
+
+        AnalyzeExpenseResponse response = textractClient.analyzeExpense(request);
+
+        Receipt extracted = analyzeExpenseResponseMapper.toEntity(response);
+
+        if (extracted == null) {
+            existing.setOcrStatus(OCRStatus.FAILED);
+            receiptRepository.save(existing);
+            throw new ReceiptNotExtractedException("Couldn't extract receipt data");
+        }
+
+        existing.setVendorName(extracted.getVendorName());
+        existing.setTransactionAmount(extracted.getTransactionAmount());
+        existing.setTotalAmount(extracted.getTotalAmount());
+        existing.setTransactionDate(extracted.getTransactionDate());
+        existing.setOcrStatus(OCRStatus.COMPLETED);
+        existing.setLineItems(extracted.getLineItems());
+
+        existing = receiptRepository.save(existing);
+        return receiptMapper.toDTO(existing);
+    }
+
+    //Not needed if Key refers to entire Url
+    private String extractKeyFromUrl(String imageUrl) {
+        return imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+    }
+
 
     private void ensurePersistableReceipt(Receipt receipt) {
         if (receipt.getVendorName() == null || receipt.getVendorName().isBlank()) {

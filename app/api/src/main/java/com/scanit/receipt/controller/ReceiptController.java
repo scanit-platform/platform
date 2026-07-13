@@ -126,6 +126,13 @@ public class ReceiptController {
                 .body(receiptService.extract(dto));
     }
 
+    @PutMapping("/{id}/extract")
+    public ResponseEntity<ReceiptDTO> extractAndUpdate(
+            @PathVariable Long id,
+            @RequestBody ReceiptExtractRequestDTO dto) {
+        return ResponseEntity.ok(receiptService.extractAndUpdate(id,dto));
+    }
+
     @ExceptionHandler(ReceiptNotFoundException.class)
     public ResponseEntity<String> handleReceiptNotFoundException(ReceiptNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

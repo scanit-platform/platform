@@ -26,6 +26,10 @@ public interface ReceiptService {
     List<Receipt> findByVendorName(String vendorName);
 
     List<Receipt> findByTransactionDate(LocalDate transactionDate);
+
     ReceiptDTO extract(ReceiptExtractRequestDTO dto);
+
+    ReceiptDTO extractAndUpdate(Long receiptId, ReceiptExtractRequestDTO dto);
+
     ReceiptDTO uploadReceipt(MultipartFile file, Long userId);
 }
