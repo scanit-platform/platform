@@ -46,8 +46,8 @@ spring:
         receipts-bucket: ${AWS_S3_RECEIPT_BUCKET:local-receipts-bucket}
   servlet:
     multipart:
-      max-file-size: 50MB
-      max-request-size: 50MB
+      max-file-size: 10MB
+      max-request-size: 11MB
 app:
   email:
     from: ${APP_EMAIL_FROM:noreply@scanit.com}
