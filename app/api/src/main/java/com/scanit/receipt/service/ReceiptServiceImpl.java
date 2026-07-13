@@ -131,7 +131,7 @@ public class ReceiptServiceImpl implements ReceiptService {
 
     @Override
     public Iterable<Receipt> findAll() {
-        return (List<Receipt>) receiptRepository.findAll();
+        return receiptRepository.findAll();
     }
 
     @Override

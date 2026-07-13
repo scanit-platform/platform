@@ -8,8 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @ConfigurationPropertiesScan
 public class ScanItPlatformApplication {
 
-	public static void main(String[] args) {
-		System.out.println("Working dir: " + System.getProperty("user.dir"));
+	 static void main(String[] args) {
 		SpringApplication.run(ScanItPlatformApplication.class, args);
 	}
 }
