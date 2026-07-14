@@ -116,7 +116,9 @@
           <span className="text-[0.75rem] font-medium text-[var(--scanit-text-muted)] uppercase tracking-wide">
             Receipt Data
           </span>
-                <div className={"flex flex-row gap-3 justify-left"}>
+
+                <div className={"grid grid-cols-2 gap-x-3 gap-y-4"}>
+
                     <ReceiptField label="Scanned Vendor" value={receipt.vendorName} />
                     <Input
                         label="Update Vendor"
@@ -125,18 +127,17 @@
                         placeholder="Supervalu"
                         value={vendorName}
                     />
-                </div>
 
-                    <div className={"flex flex-row gap-3 justify-left"}>
+
                     <ReceiptField
-                        label="Scanned Total amount"
+                        label="Scanned Total Amount"
                         value={receipt.totalAmount != null
                             ? `€${Number(receipt.totalAmount).toFixed(2)}`
                             : null}
                     />
                         <Input
                             inputMode="decimal"
-                            label="Update Total amount"
+                            label="Update Total Amount"
                             min="0"
                             name="totalAmount"
                             onChange={(event) => setTotalAmount(event.target.value)}
@@ -145,18 +146,18 @@
                             type="number"
                             value={totalAmount}
                         />
-                    </div>
 
-                    <div className={"flex flex-row gap-3 justify-left"}>
+
+
                     <ReceiptField
-                        label="Scanned Transaction amount"
+                        label="Scanned Transaction Amount"
                         value={receipt.transactionAmount != null
                             ? `€${Number(receipt.transactionAmount).toFixed(2)}`
                             : null}
                     />
                         <Input
                             inputMode="decimal"
-                            label="Update Transaction amount"
+                            label="Update Transaction Amount"
                             min="0"
                             name="transactionAmount"
                             onChange={(event) => setTransactionAmount(event.target.value)}
@@ -165,8 +166,7 @@
                             type="number"
                             value={transactionAmount}
                         />
-                    </div>
-                    <div className={"flex flex-row gap-3 justify-left"}>
+
                     <ReceiptField label="Scanned Date" value={formatDisplayDate(receipt.transactionDate)} />
                         <Input className={"justify-end"}
                             label="Updated Date"
