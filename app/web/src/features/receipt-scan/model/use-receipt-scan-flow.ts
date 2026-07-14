@@ -1,8 +1,11 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { ApiError } from "@/src/shared/api/client";
-import { uploadReceipt } from "@/src/entities/receipt/api/receipts-service";
+import {
+  extractReceipt,
+  uploadReceipt,
+} from "@/src/entities/receipt/api/receipts-service";
 import type { Receipt } from "@/src/entities/receipt/types/receipt";
 import {
   type ReceiptScanStep,
@@ -16,6 +19,8 @@ export function useReceiptScanFlow(userId: number | undefined) {
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  const uploadControllerRef = useRef<AbortController | null>(null);
 
   const selectReceiptFile = useCallback((file: File | null) => {
     if (!file) {
@@ -53,6 +58,9 @@ export function useReceiptScanFlow(userId: number | undefined) {
       return;
     }
 
+    const controller = new AbortController();
+    uploadControllerRef.current = controller;
+
     setFileError("");
     setReceipt(null);
     setIsConfirmed(false);
@@ -63,22 +71,52 @@ export function useReceiptScanFlow(userId: number | undefined) {
       const uploadedReceipt = await uploadReceipt({
         file: selectedFile,
         onProgress: setUploadProgress,
+        signal: controller.signal,
+        userId,
+      });
+
+      const key = uploadedReceipt.imageUrl.substring(
+          uploadedReceipt.imageUrl.lastIndexOf("/") + 1,
+      );
+
+      const extractedReceipt = await extractReceipt({
+        key,
+        signal: controller.signal,
         userId,
       });
 
       setReceipt(uploadedReceipt);
       setStep("validate");
     } catch (error) {
+      const wasCancelled =
+          error instanceof DOMException &&
+          error.name === "AbortError";
+
       setFileError(
-        error instanceof ApiError || error instanceof Error
-          ? error.message
-          : "Receipt upload failed. Try again.",
+          wasCancelled
+              ? "Receipt processing was cancelled."
+              : error instanceof ApiError || error instanceof Error
+                  ? error.message
+                  : "Receipt upload failed. Try again.",
       );
+
+      setUploadProgress(0);
       setStep("upload");
+    } finally {
+      if (uploadControllerRef.current === controller) {
+        uploadControllerRef.current = null;
+      }
     }
   }, [selectedFile, userId]);
 
+  const cancelProcessing = useCallback(() => {
+    uploadControllerRef.current?.abort();
+  }, []);
+
   const resetFlow = useCallback(() => {
+    uploadControllerRef.current?.abort();
+    uploadControllerRef.current = null;
+
     setStep("upload");
     setSelectedFile(null);
     setFileError("");
@@ -94,6 +132,7 @@ export function useReceiptScanFlow(userId: number | undefined) {
   const [updatedReceipt, setUpdatedReceipt] = useState<Receipt | null>(null);
 
   return {
+    cancelProcessing,
     confirmReceipt,
     fileError,
     isConfirmed,

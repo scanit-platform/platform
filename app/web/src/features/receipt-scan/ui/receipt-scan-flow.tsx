@@ -8,31 +8,25 @@ import { useReceiptScanFlow } from "@/src/features/receipt-scan/model/use-receip
 import {ValidateReceiptStep} from "@/src/features/receipt-validate-entry/ui/validate-receipt-step";
 
 type ReceiptScanFlowProps = {
-  userId?: number;
+    userId?: number;
 };
 
 export function ReceiptScanFlow({ userId }: ReceiptScanFlowProps) {
-  const scanFlow = useReceiptScanFlow(userId);
+    const scanFlow = useReceiptScanFlow(userId);
 
-  return (
-    <div>
-      <ReceiptScanStepper currentStep={scanFlow.step} />
-      <div className="mt-8">
-        {scanFlow.step === "upload" ? (
-          <ReceiptUploadStep
-            error={scanFlow.fileError}
-            onFileSelected={scanFlow.selectReceiptFile}
-            onStartProcessing={scanFlow.startProcessing}
-            selectedFile={scanFlow.selectedFile}
-          />
-        ) : null}
+    return (
+        <div>
+            <ReceiptScanStepper currentStep={scanFlow.step} />
 
-        {scanFlow.step === "processing" ? (
-          <ReceiptProcessingStep
-            progress={scanFlow.uploadProgress}
-            selectedFile={scanFlow.selectedFile}
-          />
-        ) : null}
+            <div className="mt-8">
+                {scanFlow.step === "upload" ? (
+                    <ReceiptUploadStep
+                        error={scanFlow.fileError}
+                        onFileSelected={scanFlow.selectReceiptFile}
+                        onStartProcessing={scanFlow.startProcessing}
+                        selectedFile={scanFlow.selectedFile}
+                    />
+                ) : null}
 
           {scanFlow.step === "validate" && scanFlow.receipt ? (
                <ValidateReceiptStep

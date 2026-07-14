@@ -11,35 +11,59 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class S3StorageService {
+
+    private static final long MAX_FILE_SIZE_BYTES = 10L * 1024 * 1024;
+
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
+            "image/jpeg",
+            "image/png",
+            "application/pdf"
+    );
+
     private final S3Client s3Client;
     private final String bucketName;
 
     public S3StorageService(
             S3Client s3Client,
-            @Value("${spring.cloud.aws.s3.receipts-bucket}") String bucketName) {
+            @Value("${spring.cloud.aws.s3.receipts-bucket}") String bucketName
+    ) {
         this.s3Client = s3Client;
         this.bucketName = bucketName;
     }
 
     public String upload(MultipartFile file) {
-        String filename = file.getOriginalFilename() == null ? "receipt" : file.getOriginalFilename();
-        String key = UUID.randomUUID() + "-" + filename;
+        validateReceipt(file);
+
+        String originalFilename = getOriginalFilename(file);
+        String key = UUID.randomUUID().toString();
 
         try {
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(key)
+                    .contentType(file.getContentType())
+                    .metadata(
+                            Map.of("original-filename", originalFilename)
+                    )
+                    .build();
+
             s3Client.putObject(
-                    PutObjectRequest.builder()
-                            .bucket(bucketName)
-                            .key(key)
-                            .contentType(file.getContentType() == null ? "application/octet-stream" : file.getContentType())
-                            .build(),
+                    request,
                     RequestBody.fromBytes(file.getBytes())
             );
+
         } catch (IOException e) {
-            throw new RuntimeException("Failed to upload file", e);
+            throw new RuntimeException(
+                    "Receipt upload failed. Please try again.",
+                    e
+            );
         }
 
         return String.format(
@@ -50,15 +74,54 @@ public class S3StorageService {
     }
 
     public byte[] downloadReceipt(String imageUrl) {
-        String key = imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
-
-        ResponseBytes<GetObjectResponse> objectAsBytes = s3Client.getObjectAsBytes(
-                GetObjectRequest.builder()
-                        .bucket(bucketName)
-                        .key(key)
-                        .build()
+        String key = imageUrl.substring(
+                imageUrl.lastIndexOf("/") + 1
         );
 
+        GetObjectRequest request = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .build();
+
+        ResponseBytes<GetObjectResponse> objectAsBytes =
+                s3Client.getObjectAsBytes(request);
+
         return objectAsBytes.asByteArray();
+    }
+
+    private void validateReceipt(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Please select a receipt file."
+            );
+        }
+
+        if (file.getSize() > MAX_FILE_SIZE_BYTES) {
+            throw new IllegalArgumentException(
+                    "The file is too large. Maximum size is 10 MB."
+            );
+        }
+
+        String contentType = file.getContentType();
+
+        if (contentType == null
+                || !ALLOWED_CONTENT_TYPES.contains(contentType)) {
+
+            throw new IllegalArgumentException(
+                    "Invalid file format. Please upload a JPG, PNG or PDF."
+            );
+        }
+    }
+
+    private String getOriginalFilename(MultipartFile file) {
+        String originalFilename = file.getOriginalFilename();
+
+        if (originalFilename == null || originalFilename.isBlank()) {
+            return "receipt";
+        }
+
+        return Paths.get(originalFilename)
+                .getFileName()
+                .toString();
     }
 }
