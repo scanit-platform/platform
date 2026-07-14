@@ -15,6 +15,7 @@ import com.scanit.user.model.User;
 import com.scanit.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.textract.TextractClient;
@@ -31,6 +32,7 @@ import java.util.Optional;
 @Service
 @Transactional(readOnly = true)
 public class ReceiptServiceImpl implements ReceiptService {
+
     private final ReceiptRepository receiptRepository;
     private final ReceiptMapper receiptMapper;
     private final UserRepository userRepository;
@@ -48,7 +50,8 @@ public class ReceiptServiceImpl implements ReceiptService {
             AnalyzeExpenseResponseMapper analyzeExpenseResponseMapper,
             S3StorageService s3StorageService,
             CategoryReferenceService categoryReferenceService,
-            @Value("${spring.cloud.aws.s3.receipts-bucket}") String receiptsBucket) {
+            @Value("${spring.cloud.aws.s3.receipts-bucket}") String receiptsBucket
+    ) {
         this.receiptRepository = receiptRepository;
         this.receiptMapper = receiptMapper;
         this.userRepository = userRepository;
@@ -63,34 +66,66 @@ public class ReceiptServiceImpl implements ReceiptService {
     @Transactional
     public ReceiptDTO save(ReceiptDTO dto) {
         Receipt receipt = receiptMapper.toEntity(dto);
+
         User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        CategorySelection categorySelection = categoryReferenceService.resolveOptionalSelection(
-                dto.userId(),
-                dto.generalCategoryId(),
-                dto.customCategoryId());
+                .orElseThrow(() ->
+                        new IllegalArgumentException("User not found")
+                );
+
+        CategorySelection categorySelection =
+                categoryReferenceService.resolveOptionalSelection(
+                        dto.userId(),
+                        dto.generalCategoryId(),
+                        dto.customCategoryId()
+                );
+
         receipt.setUser(user);
-        receipt.setGeneralCategory(categorySelection.generalCategory());
-        receipt.setCustomCategory(categorySelection.customCategory());
+        receipt.setGeneralCategory(
+                categorySelection.generalCategory()
+        );
+        receipt.setCustomCategory(
+                categorySelection.customCategory()
+        );
         receipt.setImageUrl(dto.imageUrl());
         receipt.setOcrStatus(dto.ocrStatus());
-        Receipt savedReceipt = receiptRepository.save(receipt);
+
+        Receipt savedReceipt =
+                receiptRepository.save(receipt);
+
         return receiptMapper.toDTO(savedReceipt);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Receipt> search(Long userId, String vendorName, LocalDate transactionDate) {
-        if (userId != null && vendorName != null && transactionDate != null) {
-            return receiptRepository.findByUserIdAndVendorNameAndTransactionDate(userId, vendorName, transactionDate);
+    public List<Receipt> search(
+            Long userId,
+            String vendorName,
+            LocalDate transactionDate
+    ) {
+        if (userId != null
+                && vendorName != null
+                && transactionDate != null) {
+
+            return receiptRepository
+                    .findByUserIdAndVendorNameAndTransactionDate(
+                            userId,
+                            vendorName,
+                            transactionDate
+                    );
         }
 
         if (userId == null) {
-            throw new IllegalArgumentException("userId is required");
+            throw new IllegalArgumentException(
+                    "userId is required"
+            );
         }
 
         if (vendorName != null) {
-            return receiptRepository.findByUserIdAndVendorName(userId, vendorName);
+            return receiptRepository
+                    .findByUserIdAndVendorName(
+                            userId,
+                            vendorName
+                    );
         }
 
         return receiptRepository.findByUserId(userId);
@@ -98,24 +133,37 @@ public class ReceiptServiceImpl implements ReceiptService {
 
     @Override
     @Transactional
-    public ReceiptDTO uploadReceipt(MultipartFile file, Long userId) {
+    public ReceiptDTO uploadReceipt(
+            MultipartFile file,
+            Long userId
+    ) {
         if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Receipt file is required");
+            throw new IllegalArgumentException(
+                    "Receipt file is required"
+            );
         }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "User not found"
+                        )
+                );
 
         String imageUrl = s3StorageService.upload(file);
 
         Receipt receipt = new Receipt();
         receipt.setUser(user);
         receipt.setImageUrl(imageUrl);
+
+        // Файл загружен, но Textract ещё не запущен.
         receipt.setOcrStatus(OCRStatus.PENDING);
+
         receipt.setVendorName("Pending OCR");
         receipt.setTransactionDate(LocalDate.now());
 
-        Receipt saved = receiptRepository.save(receipt);
+        Receipt saved =
+                receiptRepository.save(receipt);
 
         try {
             extractAndUpdate(saved.getId(), new ReceiptExtractRequestDTO(
@@ -164,33 +212,128 @@ public class ReceiptServiceImpl implements ReceiptService {
     }
 
     @Override
-    public List<Receipt> findByTransactionDate(java.time.LocalDate transactionDate) {
-        return receiptRepository.findByTransactionDate(transactionDate);
+    public List<Receipt> findByTransactionDate(
+            LocalDate transactionDate
+    ) {
+        return receiptRepository
+                .findByTransactionDate(transactionDate);
     }
 
     @Override
-    @Transactional
-    public ReceiptDTO extract(ReceiptExtractRequestDTO dto) {
-        User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    @Transactional(
+            propagation = Propagation.NOT_SUPPORTED
+    )
+    public ReceiptDTO extract(
+            ReceiptExtractRequestDTO dto
+    ) {
+        userRepository.findById(dto.userId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "User not found"
+                        )
+                );
 
-        AnalyzeExpenseRequest request = AnalyzeExpenseRequest.builder().document(
-                Document.builder().s3Object(S3Object.builder().bucket(receiptsBucket).name(dto.key()).build()).build()).build();
-        
-        AnalyzeExpenseResponse response = textractClient.analyzeExpense(request);
-        
-        Receipt receipt = analyzeExpenseResponseMapper.toEntity(response);
-        
-        if (receipt == null) {
-            throw new ReceiptNotExtractedException("Couldn't extract receipt data");
+        String imageUrl = toS3Url(dto.key());
+
+        /*
+         * Находим Receipt, который уже был создан
+         * методом uploadReceipt().
+         */
+        Receipt receipt = receiptRepository
+                .findByUserIdAndImageUrl(
+                        dto.userId(),
+                        imageUrl
+                )
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Uploaded receipt not found"
+                        )
+                );
+
+        // PENDING → PROCESSING
+        receipt.setOcrStatus(OCRStatus.PROCESSING);
+        receiptRepository.save(receipt);
+
+        try {
+            AnalyzeExpenseRequest request =
+                    AnalyzeExpenseRequest.builder()
+                            .document(
+                                    Document.builder()
+                                            .s3Object(
+                                                    S3Object.builder()
+                                                            .bucket(
+                                                                    receiptsBucket
+                                                            )
+                                                            .name(dto.key())
+                                                            .build()
+                                            )
+                                            .build()
+                            )
+                            .build();
+
+            AnalyzeExpenseResponse response =
+                    textractClient.analyzeExpense(request);
+
+            /*
+             * Mapper создаёт временный объект
+             * с результатами Textract.
+             *
+             * Мы его не сохраняем как новый Receipt.
+             */
+            Receipt extractedReceipt =
+                    analyzeExpenseResponseMapper
+                            .toEntity(response);
+
+            if (extractedReceipt == null) {
+                throw new ReceiptNotExtractedException(
+                        "Couldn't extract receipt data"
+                );
+            }
+
+            /*push data to existed notation */
+            receipt.setVendorName(
+                    extractedReceipt.getVendorName()
+            );
+
+            receipt.setTransactionAmount(
+                    extractedReceipt
+                            .getTransactionAmount()
+            );
+
+            receipt.setTotalAmount(
+                    extractedReceipt.getTotalAmount()
+            );
+
+            receipt.setTransactionDate(
+                    extractedReceipt
+                            .getTransactionDate()
+            );
+
+            // PROCESSING → COMPLETED
+            receipt.setOcrStatus(OCRStatus.COMPLETED);
+
+            ensurePersistableReceipt(receipt);
+
+            Receipt savedReceipt =
+                    receiptRepository.save(receipt);
+
+            return receiptMapper.toDTO(savedReceipt);
+
+        } catch (RuntimeException exception) {
+            // PROCESSING → FAILED
+            receipt.setOcrStatus(OCRStatus.FAILED);
+            receiptRepository.save(receipt);
+
+            if (exception
+                    instanceof ReceiptNotExtractedException) {
+
+                throw exception;
+            }
+
+            throw new ReceiptNotExtractedException(
+                    "Couldn't extract receipt data"
+            );
         }
-        
-        receipt.setUser(user);
-        receipt.setImageUrl(toS3Url(dto.key()));
-        ensurePersistableReceipt(receipt);
-        receipt = receiptRepository.save(receipt);
-
-        return receiptMapper.toDTO(receipt);
     }
 
     @Value("${app.ocr.mock-enabled:false}")
@@ -256,15 +399,23 @@ public class ReceiptServiceImpl implements ReceiptService {
         }
 
         if (receipt.getTransactionDate() == null) {
-            receipt.setTransactionDate(LocalDate.now());
+            receipt.setTransactionDate(
+                    LocalDate.now()
+            );
         }
 
         if (receipt.getOcrStatus() == null) {
-            receipt.setOcrStatus(OCRStatus.COMPLETED);
+            receipt.setOcrStatus(
+                    OCRStatus.COMPLETED
+            );
         }
     }
 
     private String toS3Url(String key) {
-        return String.format("https://%s.s3.amazonaws.com/%s", receiptsBucket, key);
+        return String.format(
+                "https://%s.s3.amazonaws.com/%s",
+                receiptsBucket,
+                key
+        );
     }
 }
