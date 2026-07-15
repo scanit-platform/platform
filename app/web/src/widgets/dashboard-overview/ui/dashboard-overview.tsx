@@ -18,8 +18,8 @@ type DashboardOverviewProps = {
   user: User | null;
 };
 
-const moneyFormatter = new Intl.NumberFormat("en-US", {
-  currency: "USD",
+const moneyFormatter = new Intl.NumberFormat("en-IE", {
+  currency: "EUR",
   style: "currency",
 });
 

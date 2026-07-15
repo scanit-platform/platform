@@ -4,8 +4,8 @@ type ReceiptReviewCardProps = {
   receipt: Receipt;
 };
 
-const moneyFormatter = new Intl.NumberFormat("en-US", {
-  currency: "USD",
+const moneyFormatter = new Intl.NumberFormat("en-IE", {
+  currency: "EUR",
   style: "currency",
 });
 
