@@ -17,8 +17,8 @@ import type {
 } from "@/src/entities/category/types/category";
 import { AppShell } from "@/src/widgets/app-shell/ui/app-shell";
 
-const moneyFormatter = new Intl.NumberFormat("en-US", {
-  currency: "USD",
+const moneyFormatter = new Intl.NumberFormat("en-IE", {
+  currency: "EUR",
   maximumFractionDigits: 0,
   style: "currency",
 });
