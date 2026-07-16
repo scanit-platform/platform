@@ -32,7 +32,7 @@ export function ReceiptReviewCard({ receipt }: ReceiptReviewCardProps) {
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--scanit-text-muted)]">
-              Merchant
+              Vendor
             </p>
             <p className="mt-1 font-serif text-2xl font-bold text-[var(--scanit-text)]">
               {receipt.vendorName}

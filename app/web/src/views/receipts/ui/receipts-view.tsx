@@ -25,7 +25,7 @@ function formatDate(value: string) {
     return value;
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("en-IE", {
     day: "numeric",
     month: "short",
     year: "numeric",

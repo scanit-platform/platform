@@ -1,5 +1,6 @@
 package com.scanit.receipt.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.scanit.receipt.model.OCRStatus;
 
 import java.math.BigDecimal;

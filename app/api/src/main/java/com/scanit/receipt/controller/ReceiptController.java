@@ -2,6 +2,7 @@ package com.scanit.receipt.controller;
 
 import com.scanit.receipt.dto.ReceiptDTO;
 import com.scanit.receipt.dto.ReceiptExtractRequestDTO;
+import com.scanit.receipt.dto.ReceiptUpdateRequestDTO;
 import com.scanit.receipt.exception.ReceiptNotFoundException;
 import com.scanit.receipt.model.Receipt;
 import com.scanit.receipt.service.ReceiptService;
@@ -74,6 +75,14 @@ public class ReceiptController {
         receiptService.deleteByReceiptId(id);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ReceiptDTO> updateReceipt(
+            @PathVariable Long id,
+            @RequestBody ReceiptUpdateRequestDTO dto) {
+        Receipt updated = receiptService.updateReceipt(id, dto);
+        return ResponseEntity.ok(toDTO(updated));
+    }
+
     @PostMapping("/upload")
     public ResponseEntity<ReceiptDTO> uploadReceipt(
             @RequestParam Long userId,
@@ -115,6 +124,13 @@ public class ReceiptController {
     public ResponseEntity<ReceiptDTO> extractReceipt(@RequestBody ReceiptExtractRequestDTO dto) {
         return ResponseEntity.status(201)
                 .body(receiptService.extract(dto));
+    }
+
+    @PutMapping("/{id}/extract")
+    public ResponseEntity<ReceiptDTO> extractAndUpdate(
+            @PathVariable Long id,
+            @RequestBody ReceiptExtractRequestDTO dto) {
+        return ResponseEntity.ok(receiptService.extractAndUpdate(id,dto));
     }
 
     @ExceptionHandler(ReceiptNotFoundException.class)

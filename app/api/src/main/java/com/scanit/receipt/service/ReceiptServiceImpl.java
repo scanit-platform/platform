@@ -4,6 +4,7 @@ import com.scanit.category.service.CategoryReferenceService;
 import com.scanit.category.service.CategorySelection;
 import com.scanit.receipt.dto.ReceiptDTO;
 import com.scanit.receipt.dto.ReceiptExtractRequestDTO;
+import com.scanit.receipt.dto.ReceiptUpdateRequestDTO;
 import com.scanit.receipt.exception.ReceiptNotExtractedException;
 import com.scanit.receipt.mapper.AnalyzeExpenseResponseMapper;
 import com.scanit.receipt.mapper.ReceiptMapper;
@@ -23,6 +24,7 @@ import software.amazon.awssdk.services.textract.model.AnalyzeExpenseResponse;
 import software.amazon.awssdk.services.textract.model.Document;
 import software.amazon.awssdk.services.textract.model.S3Object;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -163,12 +165,22 @@ public class ReceiptServiceImpl implements ReceiptService {
         Receipt saved =
                 receiptRepository.save(receipt);
 
+        try {
+            extractAndUpdate(saved.getId(), new ReceiptExtractRequestDTO(
+                    userId,
+                    extractKeyFromUrl(saved.getImageUrl())
+            ));
+        } catch (ReceiptNotExtractedException e) {
+            saved.setOcrStatus(OCRStatus.FAILED);
+            receiptRepository.save(saved);
+        }
+
         return receiptMapper.toDTO(saved);
     }
 
     @Override
     public Iterable<Receipt> findAll() {
-        return (List<Receipt>) receiptRepository.findAll();
+        return receiptRepository.findAll();
     }
 
     @Override
@@ -182,11 +194,21 @@ public class ReceiptServiceImpl implements ReceiptService {
     }
 
     @Override
-    public List<Receipt> findByVendorName(
-            String vendorName
-    ) {
-        return receiptRepository
-                .findByVendorName(vendorName);
+    public Receipt updateReceipt(Long id, ReceiptUpdateRequestDTO dto) {
+        Receipt receipt = receiptRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Receipt not found: " + id));
+
+        if (dto.vendorName() != null) receipt.setVendorName(dto.vendorName());
+        if (dto.totalAmount() != null) receipt.setTotalAmount(dto.totalAmount());
+        if (dto.transactionAmount() != null) receipt.setTransactionAmount(dto.transactionAmount());
+        if (dto.transactionDate() != null) receipt.setTransactionDate(dto.transactionDate());
+
+        return receiptRepository.save(receipt);
+    }
+
+    @Override
+    public List<Receipt> findByVendorName(String vendorName) {
+        return receiptRepository.findByVendorName(vendorName);
     }
 
     @Override
@@ -314,12 +336,65 @@ public class ReceiptServiceImpl implements ReceiptService {
         }
     }
 
-    private void ensurePersistableReceipt(
-            Receipt receipt
-    ) {
-        if (receipt.getVendorName() == null
-                || receipt.getVendorName().isBlank()) {
+    @Value("${app.ocr.mock-enabled:false}")
+    private boolean mockOcrEnabled;
 
+    @Override
+    @Transactional
+    public ReceiptDTO extractAndUpdate(Long receiptId, ReceiptExtractRequestDTO dto) {
+
+        Receipt existing = receiptRepository.findById(receiptId)
+                .orElseThrow(() -> new IllegalArgumentException("Receipt Not Found: " + receiptId));
+
+        if (mockOcrEnabled) {
+
+            existing.setVendorName("Lidl");
+            existing.setTotalAmount(new BigDecimal("42.99"));
+            existing.setTransactionAmount(new BigDecimal("38.99"));
+            existing.setTransactionDate(LocalDate.now());
+            existing.setOcrStatus(OCRStatus.COMPLETED);
+            existing = receiptRepository.save(existing);
+            return receiptMapper.toDTO(existing);
+        }
+
+        AnalyzeExpenseRequest request = AnalyzeExpenseRequest.builder()
+                .document(Document.builder()
+                        .s3Object(S3Object.builder()
+                                .bucket(receiptsBucket)
+                                .name(dto.key())
+                                .build())
+                        .build())
+                .build();
+
+        AnalyzeExpenseResponse response = textractClient.analyzeExpense(request);
+
+        Receipt extracted = analyzeExpenseResponseMapper.toEntity(response);
+
+        if (extracted == null) {
+            existing.setOcrStatus(OCRStatus.FAILED);
+            receiptRepository.save(existing);
+            throw new ReceiptNotExtractedException("Couldn't extract receipt data");
+        }
+
+        existing.setVendorName(extracted.getVendorName());
+        existing.setTransactionAmount(extracted.getTransactionAmount());
+        existing.setTotalAmount(extracted.getTotalAmount());
+        existing.setTransactionDate(extracted.getTransactionDate());
+        existing.setOcrStatus(OCRStatus.COMPLETED);
+        existing.setLineItems(extracted.getLineItems());
+
+        existing = receiptRepository.save(existing);
+        return receiptMapper.toDTO(existing);
+    }
+
+    //Not needed if Key refers to entire Url
+    private String extractKeyFromUrl(String imageUrl) {
+        return imageUrl.substring(imageUrl.lastIndexOf("/") + 1);
+    }
+
+
+    private void ensurePersistableReceipt(Receipt receipt) {
+        if (receipt.getVendorName() == null || receipt.getVendorName().isBlank()) {
             receipt.setVendorName("Unknown vendor");
         }
 

@@ -1,4 +1,4 @@
-export type ReceiptScanStep = "upload" | "processing" | "review";
+export type ReceiptScanStep = "upload" | "processing" | "validate" | "review";
 
 export const receiptScanSteps: Array<{
   id: ReceiptScanStep;
@@ -6,6 +6,7 @@ export const receiptScanSteps: Array<{
 }> = [
   { id: "upload", label: "Upload" },
   { id: "processing", label: "Processing" },
+  { id: "validate", label: "Validate"},
   { id: "review", label: "Review" },
 ];
 

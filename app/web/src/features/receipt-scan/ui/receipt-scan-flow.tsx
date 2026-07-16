@@ -5,6 +5,7 @@ import { ReceiptReviewStep } from "@/src/features/receipt-scan/ui/receipt-review
 import { ReceiptScanStepper } from "@/src/features/receipt-scan/ui/receipt-scan-stepper";
 import { ReceiptUploadStep } from "@/src/features/receipt-scan/ui/receipt-upload-step";
 import { useReceiptScanFlow } from "@/src/features/receipt-scan/model/use-receipt-scan-flow";
+import {ValidateReceiptStep} from "@/src/features/receipt-validate-entry/ui/validate-receipt-step";
 
 type ReceiptScanFlowProps = {
     userId?: number;
@@ -27,23 +28,25 @@ export function ReceiptScanFlow({ userId }: ReceiptScanFlowProps) {
                     />
                 ) : null}
 
-                {scanFlow.step === "processing" ? (
-                    <ReceiptProcessingStep
-                        onCancel={scanFlow.cancelProcessing}
-                        progress={scanFlow.uploadProgress}
-                        selectedFile={scanFlow.selectedFile}
-                    />
-                ) : null}
+          {scanFlow.step === "validate" && scanFlow.receipt ? (
+               <ValidateReceiptStep
+                          receipt={scanFlow.receipt}
+                          onScanAnotherAction={scanFlow.resetFlow}
+                          onVerifyAction={() => scanFlow.setStep("review")}
+                          onSaveAction={(updated) => scanFlow.setUpdatedReceipt(updated)}
+                      />
+          ) : null}
 
-                {scanFlow.step === "review" ? (
-                    <ReceiptReviewStep
-                        isConfirmed={scanFlow.isConfirmed}
-                        onConfirm={scanFlow.confirmReceipt}
-                        onReset={scanFlow.resetFlow}
-                        receipt={scanFlow.receipt}
-                    />
-                ) : null}
-            </div>
-        </div>
-    );
+              {scanFlow.step === "review" ? (
+          <ReceiptReviewStep
+            isConfirmed={scanFlow.isConfirmed}
+            onConfirm={scanFlow.confirmReceipt}
+            onReset={scanFlow.resetFlow}
+            onBackAction={() => scanFlow.setStep("validate")}
+            receipt={scanFlow.updatedReceipt ?? scanFlow.receipt}
+          />
+        ) : null}
+      </div>
+    </div>
+  );
 }

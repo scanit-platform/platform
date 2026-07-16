@@ -1,5 +1,6 @@
 package com.scanit.receipt.service;
 
+import com.scanit.receipt.dto.ReceiptUpdateRequestDTO;
 import com.scanit.receipt.model.Receipt;
 import com.scanit.receipt.dto.ReceiptDTO;
 import com.scanit.receipt.dto.ReceiptExtractRequestDTO;
@@ -16,6 +17,8 @@ public interface ReceiptService {
 
     Optional<Receipt> findById(Long id);
 
+    Receipt updateReceipt(Long id, ReceiptUpdateRequestDTO dto);
+
     void deleteByReceiptId(Long id);
 
     List<Receipt> search(Long id, String vendorName, LocalDate transactionDate);
@@ -23,6 +26,10 @@ public interface ReceiptService {
     List<Receipt> findByVendorName(String vendorName);
 
     List<Receipt> findByTransactionDate(LocalDate transactionDate);
+
     ReceiptDTO extract(ReceiptExtractRequestDTO dto);
+
+    ReceiptDTO extractAndUpdate(Long receiptId, ReceiptExtractRequestDTO dto);
+
     ReceiptDTO uploadReceipt(MultipartFile file, Long userId);
 }

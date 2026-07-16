@@ -85,8 +85,8 @@ export function useReceiptScanFlow(userId: number | undefined) {
         userId,
       });
 
-      setReceipt(extractedReceipt);
-      setStep("review");
+      setReceipt(uploadedReceipt);
+      setStep("validate");
     } catch (error) {
       const wasCancelled =
           error instanceof DOMException &&
@@ -129,6 +129,8 @@ export function useReceiptScanFlow(userId: number | undefined) {
     setIsConfirmed(true);
   }, []);
 
+  const [updatedReceipt, setUpdatedReceipt] = useState<Receipt | null>(null);
+
   return {
     cancelProcessing,
     confirmReceipt,
@@ -141,5 +143,8 @@ export function useReceiptScanFlow(userId: number | undefined) {
     startProcessing,
     step,
     uploadProgress,
+    setStep,
+    updatedReceipt,
+    setUpdatedReceipt
   };
 }
