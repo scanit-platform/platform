@@ -28,6 +28,14 @@ export function ReceiptScanFlow({ userId }: ReceiptScanFlowProps) {
                     />
                 ) : null}
 
+                {scanFlow.step === "processing" ? (
+                    <ReceiptProcessingStep
+                        onCancel={scanFlow.cancelProcessing}
+                        progress={scanFlow.uploadProgress}
+                        selectedFile={scanFlow.selectedFile}
+                    />
+                ) : null}
+
           {scanFlow.step === "validate" && scanFlow.receipt ? (
                <ValidateReceiptStep
                           receipt={scanFlow.receipt}
