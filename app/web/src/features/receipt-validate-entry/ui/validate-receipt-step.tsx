@@ -35,13 +35,21 @@
         const [error, setError] = useState("");
 
         async function handleSave() {
-            setError("");
-
+                setError("");
             if (!vendorName.trim()) { setError("Vendor name is required."); return; }
             if (!totalAmount) { setError("Total amount is required."); return; }
             if (!transactionDate) { setError("Transaction date is required."); return; }
 
             setIsSaving(true);
+
+            console.log("handleSave fired - sending:",{
+               vendorName: vendorName.trim(),
+               totalAmount: parseFloat(totalAmount),
+               transactionAmount: transactionAmount
+                            ? parseFloat(transactionAmount)
+                            : parseFloat(totalAmount),
+                transactionDate,
+            });
 
             try {
                 const res = await fetch(`/api/receipt/${receipt.id}`, {
@@ -58,17 +66,21 @@
                     }),
                 });
 
+                console.log("PUT status:", res.status);
+
                 if (!res.ok) {
                     const body = await res.json().catch(() => ({}));
                     throw new Error(body.message ?? "Failed to save receipt.");
                 }
 
                 const updatedReceipt = await res.json();
+                console.log("PUT response:", updatedReceipt);
                 onSaveAction?.(updatedReceipt);
                 onVerifyAction?.();
                 router.refresh();
 
             } catch (err) {
+                console.error("handleSave error:", err);
                 setError(
                     err instanceof ApiError || err instanceof Error
                         ? err.message
@@ -82,7 +94,7 @@
         return (
         <div className="space-y-5">
             {/* Success banner */}
-            <div className="rounded-lg border border-[var(--scanit-primary-softer)] bg-[var(--scanit-primary-soft)] px-4 py-3 text-sm font-semibold text-[var(--scanit-primary)]">
+            <div className="rounded-lg border border--(--scanit-primary-softer) bg--(--scanit-primary-soft) px-4 py-3 text-sm font-semibold text--(--scanit-primary)">
         <span className="inline-flex items-center gap-2">
           <CheckIcon />
           Receipt #{receipt.id} saved successfully.
@@ -92,11 +104,11 @@
             <div className="grid gap-5 sm:grid-cols-2">
                 {/* Receipt image */}
                 <div className="flex flex-col gap-2">
-          <span className="text-[0.75rem] font-medium text-[var(--scanit-text-muted)] uppercase tracking-wide">
+          <span className="text-[0.75rem] font-medium text--(--scanit-text-muted) uppercase tracking-wide">
             Receipt Image
           </span>
                     {receipt.imageUrl ? (
-                        <div className="overflow-y-auto rounded-xl border border-[var(--scanit-border)] bg-[var(--surface-1)] max-h-[50vh]">
+                        <div className="overflow-y-auto rounded-xl border border--(--scanit-border) bg--(--surface-1) max-h-[50vh]">
                             <img
                                 src={receipt.imageUrl}
                                 alt={`Receipt from ${receipt.vendorName ?? "unknown vendor"}`}
@@ -104,8 +116,8 @@
                             />
                         </div>
                     ) : (
-                        <div className="flex h-40 items-center justify-center rounded-xl border border-dashed border-[var(--scanit-border)] bg-[var(--surface-1)]">
-                            <p className="text-[0.8125rem] text-[var(--scanit-text-muted)]">
+                        <div className="flex h-40 items-center justify-center rounded-xl border border-dashed border--(--scanit-border) bg--(--surface-1)">
+                            <p className="text-[0.8125rem] text--(--scanit-text-muted)">
                                 No image available
                             </p>
                         </div>
@@ -114,7 +126,7 @@
 
                 {/* Receipt data from entity */}
                 <div className="flex flex-col gap-3">
-          <span className="text-[0.75rem] font-medium text-[var(--scanit-text-muted)] uppercase tracking-wide">
+          <span className="text-[0.75rem] font-medium text--(--scanit-text-muted) uppercase tracking-wide">
             Receipt Data
           </span>
 
@@ -231,12 +243,12 @@ function ReceiptField({
     const hasValue = value != null && value !== "";
     return (
         <div className="flex flex-col gap-1">
-            <span className="text-[0.8rem] px-2 py-1 font-medium text-[var(--scanit-label)]">
+            <span className="text-[0.8rem] px-2 py-1 font-medium text--(--scanit-label)">
              {label}
             </span>
             <div className={`grow rounded-lg border  px-3 py-2 ${
                 hasValue
-                    ? "border-[var(--scanit-border)] bg-[var(--surface-1)] text-[var(--scanit-text)]"
+                    ? "border--(--scanit-border) bg--(--surface-1)] text--(--scanit-text)"
                     : "border-red-200 bg-red-50 text-red-400"
             }`}>
                 {hasValue ? String(value) : "Not available"}

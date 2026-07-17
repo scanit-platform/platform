@@ -48,6 +48,13 @@ export async function DashboardView({ mode }: DashboardViewProps) {
       : Promise.resolve([])
   ]);
 
+  console.log("DashboardView render - receipts:", receipts.map(r => ({
+    id: r.id,
+    vendorName: r.vendorName,
+    totalAmount: r.totalAmount,
+    transactionDate: r.transactionDate,
+  })))
+
   return (
     <DashboardOverview
       budgets={budgets}

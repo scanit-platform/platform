@@ -195,6 +195,7 @@ public class ReceiptServiceImpl implements ReceiptService {
     }
 
     @Override
+    @Transactional
     public Receipt updateReceipt(Long id, ReceiptUpdateRequestDTO dto) {
         Receipt receipt = receiptRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Receipt not found: " + id));
