@@ -3,7 +3,6 @@
 import { useCallback, useRef, useState } from "react";
 import { ApiError } from "@/src/shared/api/client";
 import {
-  extractReceipt,
   uploadReceipt,
 } from "@/src/entities/receipt/api/receipts-service";
 import type { Receipt } from "@/src/entities/receipt/types/receipt";
@@ -71,16 +70,6 @@ export function useReceiptScanFlow(userId: number | undefined) {
       const uploadedReceipt = await uploadReceipt({
         file: selectedFile,
         onProgress: setUploadProgress,
-        signal: controller.signal,
-        userId,
-      });
-
-      const key = uploadedReceipt.imageUrl.substring(
-          uploadedReceipt.imageUrl.lastIndexOf("/") + 1,
-      );
-
-      const extractedReceipt = await extractReceipt({
-        key,
         signal: controller.signal,
         userId,
       });

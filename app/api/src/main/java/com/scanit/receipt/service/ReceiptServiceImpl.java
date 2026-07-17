@@ -156,7 +156,6 @@ public class ReceiptServiceImpl implements ReceiptService {
         receipt.setUser(user);
         receipt.setImageUrl(imageUrl);
 
-        // Файл загружен, но Textract ещё не запущен.
         receipt.setOcrStatus(OCRStatus.PENDING);
 
         receipt.setVendorName("Pending OCR");
@@ -173,9 +172,11 @@ public class ReceiptServiceImpl implements ReceiptService {
         } catch (ReceiptNotExtractedException e) {
             saved.setOcrStatus(OCRStatus.FAILED);
             receiptRepository.save(saved);
+            return receiptMapper.toDTO(saved);
         }
-
-        return receiptMapper.toDTO(saved);
+        Receipt updated = receiptRepository.findById(saved.getId())
+                .orElse(saved);
+        return receiptMapper.toDTO(updated);
     }
 
     @Override
