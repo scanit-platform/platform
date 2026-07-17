@@ -66,6 +66,7 @@
                 const updatedReceipt = await res.json();
                 onSaveAction?.(updatedReceipt);
                 onVerifyAction?.();
+                router.refresh();
 
             } catch (err) {
                 setError(

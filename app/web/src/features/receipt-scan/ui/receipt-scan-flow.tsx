@@ -6,12 +6,15 @@ import { ReceiptScanStepper } from "@/src/features/receipt-scan/ui/receipt-scan-
 import { ReceiptUploadStep } from "@/src/features/receipt-scan/ui/receipt-upload-step";
 import { useReceiptScanFlow } from "@/src/features/receipt-scan/model/use-receipt-scan-flow";
 import {ValidateReceiptStep} from "@/src/features/receipt-validate-entry/ui/validate-receipt-step";
+import { useRouter } from "next/navigation";
+import { revalidateDashboard } from "@/src/entities/receipt/api/receipt-actions";
 
 type ReceiptScanFlowProps = {
     userId?: number;
 };
 
 export function ReceiptScanFlow({ userId }: ReceiptScanFlowProps) {
+    const router = useRouter();
     const scanFlow = useReceiptScanFlow(userId);
 
     return (
@@ -41,14 +44,21 @@ export function ReceiptScanFlow({ userId }: ReceiptScanFlowProps) {
                           receipt={scanFlow.receipt}
                           onScanAnotherAction={scanFlow.resetFlow}
                           onVerifyAction={() => scanFlow.setStep("review")}
-                          onSaveAction={(updated) => scanFlow.setUpdatedReceipt(updated)}
+                          onSaveAction={async (updated) => {
+                              scanFlow.setUpdatedReceipt(updated);
+                              await revalidateDashboard();
+                          }}
+
                       />
           ) : null}
 
               {scanFlow.step === "review" ? (
           <ReceiptReviewStep
             isConfirmed={scanFlow.isConfirmed}
-            onConfirm={scanFlow.confirmReceipt}
+            onConfirm={() => {
+                scanFlow.confirmReceipt();
+                router.refresh();
+            }}
             onReset={scanFlow.resetFlow}
             onBackAction={() => scanFlow.setStep("validate")}
             receipt={scanFlow.updatedReceipt ?? scanFlow.receipt}

@@ -45,7 +45,7 @@ export async function DashboardView({ mode }: DashboardViewProps) {
           },
           { authToken },
         ).catch<CustomCategory[]>(() => [])
-      : Promise.resolve([]),
+      : Promise.resolve([])
   ]);
 
   return (

@@ -55,6 +55,7 @@ function getReceiptAmount(receipt: Receipt) {
 }
 
 function isReceiptInCurrentPeriod(receipt: Receipt) {
+  if (!receipt.transactionDate) return false;
   return receipt.transactionDate.startsWith(getCurrentPeriod());
 }
 

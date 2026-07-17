@@ -223,9 +223,7 @@ public class ReceiptServiceImpl implements ReceiptService {
     @Transactional(
             propagation = Propagation.NOT_SUPPORTED
     )
-    public ReceiptDTO extract(
-            ReceiptExtractRequestDTO dto
-    ) {
+    public ReceiptDTO extract(ReceiptExtractRequestDTO dto) {
         userRepository.findById(dto.userId())
                 .orElseThrow(() ->
                         new IllegalArgumentException(
@@ -235,10 +233,6 @@ public class ReceiptServiceImpl implements ReceiptService {
 
         String imageUrl = toS3Url(dto.key());
 
-        /*
-         * Находим Receipt, который уже был создан
-         * методом uploadReceipt().
-         */
         Receipt receipt = receiptRepository
                 .findByUserIdAndImageUrl(
                         dto.userId(),
@@ -249,6 +243,16 @@ public class ReceiptServiceImpl implements ReceiptService {
                                 "Uploaded receipt not found"
                         )
                 );
+
+        if (mockOcrEnabled) {
+
+            receipt.setVendorName("Lidl");
+            receipt.setTotalAmount(new BigDecimal("42.99"));
+            receipt.setTransactionAmount(new BigDecimal("38.99"));
+            receipt.setTransactionDate(LocalDate.now());
+            receipt.setOcrStatus(OCRStatus.COMPLETED);
+            return receiptMapper.toDTO(receiptRepository.save(receipt));
+        }
 
         // PENDING → PROCESSING
         receipt.setOcrStatus(OCRStatus.PROCESSING);
@@ -274,12 +278,6 @@ public class ReceiptServiceImpl implements ReceiptService {
             AnalyzeExpenseResponse response =
                     textractClient.analyzeExpense(request);
 
-            /*
-             * Mapper создаёт временный объект
-             * с результатами Textract.
-             *
-             * Мы его не сохраняем как новый Receipt.
-             */
             Receipt extractedReceipt =
                     analyzeExpenseResponseMapper
                             .toEntity(response);
@@ -353,8 +351,7 @@ public class ReceiptServiceImpl implements ReceiptService {
             existing.setTransactionAmount(new BigDecimal("38.99"));
             existing.setTransactionDate(LocalDate.now());
             existing.setOcrStatus(OCRStatus.COMPLETED);
-            existing = receiptRepository.save(existing);
-            return receiptMapper.toDTO(existing);
+            return receiptMapper.toDTO(receiptRepository.save(existing));
         }
 
         AnalyzeExpenseRequest request = AnalyzeExpenseRequest.builder()
