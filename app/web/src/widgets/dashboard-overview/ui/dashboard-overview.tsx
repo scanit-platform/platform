@@ -200,7 +200,7 @@ export function DashboardOverview({
 
           <div className="mb-6 grid gap-4 md:grid-cols-2">
             <Link
-              className="scanit-auth-card group flex min-h-36 items-center justify-between gap-5 p-5 transition-colors hover:border-[var(--scanit-primary)]"
+              className="scanit-auth-card group flex min-h-36 items-center justify-between gap-5 p-5 transition-colors hover:border-(--scanit-primary)"
               href={isGuest ? "/login?mode=signin" : "/dashboard/scan"}
             >
               <div>
@@ -220,7 +220,7 @@ export function DashboardOverview({
             </Link>
 
             <Link
-              className="scanit-auth-card group flex min-h-36 items-center justify-between gap-5 p-5 transition-colors hover:border-[var(--scanit-primary)]"
+              className="scanit-auth-card group flex min-h-36 items-center justify-between gap-5 p-5 transition-colors hover:border-(--scanit-primary)"
               href={isGuest ? "/login?mode=signin" : "/dashboard/entry"}
             >
               <div>
