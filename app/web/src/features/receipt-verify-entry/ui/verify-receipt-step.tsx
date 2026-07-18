@@ -9,7 +9,7 @@
     import { Button } from "@/src/shared/ui/button/button";
     import { ApiError } from "@/src/shared/api/client";
 
-    export function ValidateReceiptStep({
+    export function VerifyReceiptStep({
                                             receipt,
                                             onScanAnotherAction,
                                             onVerifyAction,

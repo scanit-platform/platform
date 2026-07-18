@@ -8,7 +8,7 @@ import {
 import type { Receipt } from "@/src/entities/receipt/types/receipt";
 import {
   type ReceiptScanStep,
-  validateReceiptFile,
+  verifyReceiptFile,
 } from "@/src/features/receipt-scan/model/receipt-scan-state";
 
 export function useReceiptScanFlow(userId: number | undefined) {
@@ -26,7 +26,7 @@ export function useReceiptScanFlow(userId: number | undefined) {
       return;
     }
 
-    const validationError = validateReceiptFile(file);
+    const validationError = verifyReceiptFile(file);
 
     if (validationError) {
       setFileError(validationError);
@@ -75,7 +75,7 @@ export function useReceiptScanFlow(userId: number | undefined) {
       });
 
       setReceipt(uploadedReceipt);
-      setStep("validate");
+      setStep("verify");
     } catch (error) {
       const wasCancelled =
           error instanceof DOMException &&
