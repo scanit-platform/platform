@@ -35,13 +35,21 @@
         const [error, setError] = useState("");
 
         async function handleSave() {
-            setError("");
-
+                setError("");
             if (!vendorName.trim()) { setError("Vendor name is required."); return; }
             if (!totalAmount) { setError("Total amount is required."); return; }
             if (!transactionDate) { setError("Transaction date is required."); return; }
 
             setIsSaving(true);
+
+            console.log("handleSave fired - sending:",{
+               vendorName: vendorName.trim(),
+               totalAmount: parseFloat(totalAmount),
+               transactionAmount: transactionAmount
+                            ? parseFloat(transactionAmount)
+                            : parseFloat(totalAmount),
+                transactionDate,
+            });
 
             try {
                 const res = await fetch(`/api/receipt/${receipt.id}`, {
@@ -58,16 +66,21 @@
                     }),
                 });
 
+                console.log("PUT status:", res.status);
+
                 if (!res.ok) {
                     const body = await res.json().catch(() => ({}));
                     throw new Error(body.message ?? "Failed to save receipt.");
                 }
 
                 const updatedReceipt = await res.json();
+                console.log("PUT response:", updatedReceipt);
                 onSaveAction?.(updatedReceipt);
                 onVerifyAction?.();
+                router.refresh();
 
             } catch (err) {
+                console.error("handleSave error:", err);
                 setError(
                     err instanceof ApiError || err instanceof Error
                         ? err.message

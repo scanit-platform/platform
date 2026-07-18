@@ -14,6 +14,7 @@ import type {
 import { Button } from "@/src/shared/ui/button/button";
 import { Input } from "@/src/shared/ui/input/input";
 import { CheckIcon, PlusIcon } from "@/src/shared/ui/icons/icons";
+import { revalidateDashboard } from "@/src/entities/receipt/api/receipt-actions";
 
 type ManualReceiptFormProps = {
   customCategories: CustomCategory[];
@@ -112,6 +113,7 @@ export function ManualReceiptForm({
 
       setSavedReceipt(receipt);
       resetForm();
+      await revalidateDashboard();
       router.refresh();
     } catch (submitError) {
       setError(
