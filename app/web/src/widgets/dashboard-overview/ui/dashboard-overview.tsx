@@ -162,10 +162,10 @@ export function DashboardOverview({
         <div className="mx-auto max-w-7xl">
           <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
             <div>
-              <p className="text-sm font-semibold text-[var(--scanit-primary)]">
+              <p className="text-sm font-semibold text-(--scanit-primary)">
                 {isGuest ? "Guest workspace" : user.email}
               </p>
-              <h1 className="mt-1 font-serif text-[28px] font-bold text-[var(--scanit-text)]">
+              <h1 className="mt-1 font-serif text-[28px] font-bold text-(--scanit-text)">
                 Dashboard
               </h1>
             </div>
@@ -191,8 +191,8 @@ export function DashboardOverview({
             className={[
               "mb-6 rounded-lg border px-4 py-3 text-sm font-medium",
               isGuest
-                ? "border-[var(--scanit-warning-soft)] bg-[var(--scanit-warning-softer)] text-[var(--scanit-warning-text)]"
-                : "border-[var(--scanit-primary-softer)] bg-[var(--scanit-primary-soft)] text-[var(--scanit-primary)]",
+                ? "border-(--scanit-warning-soft) bg-(--scanit-warning-softer) text-(--scanit-warning-text)"
+                : "border-(--scanit-primary-softer) bg-(--scanit-primary-soft) text-(--scanit-primary)",
             ].join(" ")}
           >
             {getStatusMessage(mode, isGuest)}
@@ -200,17 +200,17 @@ export function DashboardOverview({
 
           <div className="mb-6 grid gap-4 md:grid-cols-2">
             <Link
-              className="scanit-auth-card group flex min-h-36 items-center justify-between gap-5 p-5 transition-colors hover:border-[var(--scanit-primary)]"
+              className="scanit-auth-card group flex min-h-36 items-center justify-between gap-5 p-5 transition-colors hover:border-(--scanit-primary)"
               href={isGuest ? "/login?mode=signin" : "/dashboard/scan"}
             >
               <div>
                 <span className="scanit-auth-icon-tile mb-4 flex h-11 w-11 items-center justify-center">
                   <ReceiptIcon />
                 </span>
-                <h2 className="font-serif text-2xl font-bold text-[var(--scanit-text)]">
+                <h2 className="font-serif text-2xl font-bold text-(--scanit-text)">
                   Scan Receipt
                 </h2>
-                <p className="mt-2 text-sm text-[var(--scanit-text-secondary)]">
+                <p className="mt-2 text-sm text-(--scanit-text-secondary)">
                   Upload an image or PDF and save the receipt to your account.
                 </p>
               </div>
@@ -220,17 +220,17 @@ export function DashboardOverview({
             </Link>
 
             <Link
-              className="scanit-auth-card group flex min-h-36 items-center justify-between gap-5 p-5 transition-colors hover:border-[var(--scanit-primary)]"
+              className="scanit-auth-card group flex min-h-36 items-center justify-between gap-5 p-5 transition-colors hover:border-(--scanit-primary)"
               href={isGuest ? "/login?mode=signin" : "/dashboard/entry"}
             >
               <div>
                 <span className="scanit-auth-icon-tile mb-4 flex h-11 w-11 items-center justify-center">
                   <PlusIcon />
                 </span>
-                <h2 className="font-serif text-2xl font-bold text-[var(--scanit-text)]">
+                <h2 className="font-serif text-2xl font-bold text-(--scanit-text)">
                   Add Entry
                 </h2>
-                <p className="mt-2 text-sm text-[var(--scanit-text-secondary)]">
+                <p className="mt-2 text-sm text-(--scanit-text-secondary)">
                   Create a manual receipt or expense entry from a short form.
                 </p>
               </div>
@@ -243,20 +243,20 @@ export function DashboardOverview({
           <div className="grid gap-5 lg:grid-cols-3">
             {metrics.map((metric) => (
               <article key={metric.label} className="scanit-auth-card p-5">
-                <p className="text-sm font-medium text-[var(--scanit-label)]">
+                <p className="text-sm font-medium text-(--scanit-label)">
                   {metric.label}
                 </p>
                 <p
                   className={[
                     "mt-4 font-serif text-4xl font-bold",
                     metric.tone === "danger"
-                      ? "text-[var(--scanit-danger)]"
-                      : "text-[var(--scanit-text)]",
+                      ? "text-(--scanit-danger)"
+                      : "text-(--scanit-text)",
                   ].join(" ")}
                 >
                   {metric.value}
                 </p>
-                <p className="mt-2 text-sm text-[var(--scanit-text-secondary)]">
+                <p className="mt-2 text-sm text-(--scanit-text-secondary)">
                   {metric.detail}
                 </p>
               </article>
@@ -266,10 +266,10 @@ export function DashboardOverview({
           <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.65fr)]">
             <section className="scanit-auth-card p-5">
               <div className="mb-5 flex items-center justify-between gap-4">
-                <h2 className="font-serif text-xl font-bold text-[var(--scanit-text)]">
+                <h2 className="font-serif text-xl font-bold text-(--scanit-text)">
                   Monthly Spending
                 </h2>
-                <span className="rounded-lg border border-[var(--scanit-border)] bg-[var(--scanit-soft)] px-4 py-2 text-sm font-medium">
+                <span className="rounded-lg border border-(--scanit-border) bg-(--scanit-soft) px-4 py-2 text-sm font-medium">
                   {getCurrentPeriod()}
                 </span>
               </div>
@@ -280,30 +280,30 @@ export function DashboardOverview({
                       key={bar.label}
                       className="flex h-72 flex-col items-center justify-end gap-2"
                     >
-                      <p className="text-xs font-semibold text-[var(--scanit-label)]">
+                      <p className="text-xs font-semibold text-(--scanit-label)">
                         {moneyFormatter.format(bar.total)}
                       </p>
-                      <div className="flex h-52 w-full items-end rounded-lg bg-[var(--scanit-soft)] p-1">
+                      <div className="flex h-52 w-full items-end rounded-lg bg-(--scanit-soft) p-1">
                         <div
-                          className="w-full rounded-md bg-[var(--scanit-primary)]"
+                          className="w-full rounded-md bg-(--scanit-primary)"
                           style={{ height: bar.height }}
                         />
                       </div>
-                      <p className="max-w-full truncate text-xs text-[var(--scanit-text-secondary)]">
+                      <p className="max-w-full truncate text-xs text-(--scanit-text-secondary)">
                         {bar.label}
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="rounded-lg border border-[var(--scanit-border)] bg-[var(--scanit-soft)] px-4 py-6 text-center text-sm text-[var(--scanit-text-secondary)]">
+                <p className="rounded-lg border border-(--scanit-border) bg-(--scanit-soft) px-4 py-6 text-center text-sm text-(--scanit-text-secondary)">
                   No spending data for this month yet.
                 </p>
               )}
             </section>
 
             <section className="scanit-auth-card p-5">
-              <h2 className="font-serif text-xl font-bold text-[var(--scanit-text)]">
+              <h2 className="font-serif text-xl font-bold text-(--scanit-text)">
                 Recent Activity
               </h2>
               <div className="mt-5 space-y-3">
@@ -311,13 +311,13 @@ export function DashboardOverview({
                   recentReceipts.map((receipt) => (
                     <div
                       key={receipt.id}
-                      className="flex items-center justify-between gap-4 rounded-lg border border-[var(--scanit-border)] px-4 py-3"
+                      className="flex items-center justify-between gap-4 rounded-lg border border-(--scanit-border) px-4 py-3"
                     >
                       <div className="min-w-0">
-                        <p className="truncate font-semibold text-[var(--scanit-text)]">
+                        <p className="truncate font-semibold text-(--scanit-text)">
                           {receipt.vendorName}
                         </p>
-                        <p className="text-sm text-[var(--scanit-text-secondary)]">
+                        <p className="text-sm text-(--scanit-text-secondary)">
                           {getCategoryLabel(
                             receipt,
                             generalCategories,
@@ -331,7 +331,7 @@ export function DashboardOverview({
                     </div>
                   ))
                 ) : (
-                  <p className="rounded-lg border border-[var(--scanit-border)] bg-[var(--scanit-soft)] px-4 py-6 text-center text-sm text-[var(--scanit-text-secondary)]">
+                  <p className="rounded-lg border border-(--scanit-border) bg-(--scanit-soft) px-4 py-6 text-center text-sm text-(--scanit-text-secondary)">
                     No receipts yet.
                   </p>
                 )}

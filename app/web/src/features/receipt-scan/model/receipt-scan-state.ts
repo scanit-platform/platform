@@ -1,4 +1,4 @@
-export type ReceiptScanStep = "upload" | "processing" | "validate" | "review";
+export type ReceiptScanStep = "upload" | "processing" | "verify" | "review";
 
 export const receiptScanSteps: Array<{
   id: ReceiptScanStep;
@@ -6,7 +6,7 @@ export const receiptScanSteps: Array<{
 }> = [
   { id: "upload", label: "Upload" },
   { id: "processing", label: "Processing" },
-  { id: "validate", label: "Validate"},
+  { id: "verify", label: "Verify"},
   { id: "review", label: "Review" },
 ];
 
@@ -24,7 +24,7 @@ const acceptedMimeTypes = new Set([
 
 const acceptedExtensions = [".jpg", ".jpeg", ".png", ".pdf"];
 
-export function validateReceiptFile(file: File) {
+export function verifyReceiptFile(file: File) {
   const fileName = file.name.toLowerCase();
   const hasAcceptedMime = file.type ? acceptedMimeTypes.has(file.type) : false;
   const hasAcceptedExtension = acceptedExtensions.some((extension) =>

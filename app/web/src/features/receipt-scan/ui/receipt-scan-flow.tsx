@@ -5,7 +5,7 @@ import { ReceiptReviewStep } from "@/src/features/receipt-scan/ui/receipt-review
 import { ReceiptScanStepper } from "@/src/features/receipt-scan/ui/receipt-scan-stepper";
 import { ReceiptUploadStep } from "@/src/features/receipt-scan/ui/receipt-upload-step";
 import { useReceiptScanFlow } from "@/src/features/receipt-scan/model/use-receipt-scan-flow";
-import {ValidateReceiptStep} from "@/src/features/receipt-validate-entry/ui/validate-receipt-step";
+import {VerifyReceiptStep} from "@/src/features/receipt-verify-entry/ui/verify-receipt-step";
 import { useRouter } from "next/navigation";
 import { revalidateDashboard } from "@/src/entities/receipt/api/receipt-actions";
 
@@ -39,8 +39,8 @@ export function ReceiptScanFlow({ userId }: ReceiptScanFlowProps) {
                     />
                 ) : null}
 
-          {scanFlow.step === "validate" && scanFlow.receipt ? (
-               <ValidateReceiptStep
+          {scanFlow.step === "verify" && scanFlow.receipt ? (
+               <VerifyReceiptStep
                           receipt={scanFlow.receipt}
                           onScanAnotherAction={scanFlow.resetFlow}
                           onVerifyAction={() => scanFlow.setStep("review")}
@@ -60,7 +60,7 @@ export function ReceiptScanFlow({ userId }: ReceiptScanFlowProps) {
                 router.refresh();
             }}
             onReset={scanFlow.resetFlow}
-            onBackAction={() => scanFlow.setStep("validate")}
+            onBackAction={() => scanFlow.setStep("verify")}
             receipt={scanFlow.updatedReceipt ?? scanFlow.receipt}
           />
         ) : null}
