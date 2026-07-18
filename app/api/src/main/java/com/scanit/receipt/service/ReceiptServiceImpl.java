@@ -382,6 +382,8 @@ public class ReceiptServiceImpl implements ReceiptService {
         existing.setOcrStatus(OCRStatus.COMPLETED);
         existing.setLineItems(extracted.getLineItems());
 
+        ensurePersistableReceipt(existing);
+
         existing = receiptRepository.save(existing);
         return receiptMapper.toDTO(existing);
     }
@@ -398,9 +400,7 @@ public class ReceiptServiceImpl implements ReceiptService {
         }
 
         if (receipt.getTransactionDate() == null) {
-            receipt.setTransactionDate(
-                    LocalDate.now()
-            );
+            receipt.setTransactionDate(LocalDate.now());
         }
 
         if (receipt.getOcrStatus() == null) {
