@@ -1,9 +1,6 @@
 package com.scanit.receipt.mapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import java.time.format.DateTimeParseException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +33,7 @@ public class AnalyzeExpenseResponseMapperTests {
     }
     
     @Test
-    void shouldThrowExceptionWhenUnknownDateFormat() {
+    void shouldReturnNullTransactionDateWhenUnknownDateFormat() {
         AnalyzeExpenseResponse response = AnalyzeExpenseResponse.builder()
         .expenseDocuments(ExpenseDocument.builder()
             .summaryFields(
@@ -48,10 +45,11 @@ public class AnalyzeExpenseResponseMapperTests {
             .build()
         )
         .build();
-        
-        assertThatThrownBy(() -> {
-            mapper.toEntity(response);
-        }).isInstanceOf(DateTimeParseException.class);
+
+        Receipt receipt = mapper.toEntity(response);
+
+        assertThat(receipt).isNotNull();
+        assertThat(receipt.getTransactionDate()).isNull();
     }
     
     @ParameterizedTest
