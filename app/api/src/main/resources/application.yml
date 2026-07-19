@@ -36,10 +36,10 @@ spring:
   cloud:
     aws:
       credentials:
-        access-key: ${AWS_ACCESS_KEY_ID}
-        secret-key: ${AWS_SECRET_ACCESS_KEY}
+        access-key: ${AWS_ACCESS_KEY_ID:local-access-key}
+        secret-key: ${AWS_SECRET_ACCESS_KEY:local-secret-key}
       region:
-        static: ${AWS_REGION}
+        static: ${AWS_REGION:eu-west-1}
       ses:
         from: ${APP_EMAIL_FROM:noreply@scanit.com}
       s3:
