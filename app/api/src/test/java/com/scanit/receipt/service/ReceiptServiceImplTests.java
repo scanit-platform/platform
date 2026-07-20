@@ -3,6 +3,7 @@ package com.scanit.receipt.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -26,6 +27,7 @@ import com.scanit.receipt.repository.ReceiptRepository;
 import com.scanit.user.model.User;
 import com.scanit.user.model.UserStatus;
 import com.scanit.user.repository.UserRepository;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -286,6 +288,51 @@ public class ReceiptServiceImplTests {
                         .s3Object()
                         .name()
         ).isEqualTo(key);
+    }
+    
+    @Test
+    void shouldThrowExceptionWhenUserIdIsNull() {
+
+        assertThatThrownBy(() ->
+                receiptService.search(
+                        null,
+                        null,
+                        null
+                ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("userId is required");
+    }
+    
+    @Test
+    void shouldNotThrowExceptionWhenSearchingWithValidUserId() {
+
+        assertDoesNotThrow(() -> 
+            receiptService.search(
+                    1L,
+                    null,
+                    null
+            )
+        );
+    }
+    
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "",
+            " ",
+            "invalid.png"
+    })
+    void shouldRejectInvalidReceiptKeys(String key) {
+
+        ReceiptExtractRequestDTO dto =
+                new ReceiptExtractRequestDTO(
+                        1L,
+                        key
+                );
+
+        assertThatThrownBy(() ->
+                receiptService.extract(dto)
+        )
+        .isInstanceOf(IllegalArgumentException.class);
     }
 
     private User createMockUser() {
