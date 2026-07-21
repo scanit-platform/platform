@@ -37,7 +37,7 @@ spring:
     aws:
       credentials:
         access-key: ${AWS_ACCESS_KEY_ID:local-access-key}
-        secret-key: ${AWS_SECRET_ACCESS_KEY:local-access-key}
+        secret-key: ${AWS_SECRET_ACCESS_KEY:local-secret-key}
       region:
         static: ${AWS_REGION:eu-west-1}
       ses:
