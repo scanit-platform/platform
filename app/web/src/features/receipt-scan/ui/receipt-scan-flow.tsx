@@ -12,7 +12,7 @@ import type { GeneralCategory } from "@/src/entities/category/types/category";
 
 type ReceiptScanFlowProps = {
     userId?: number;
-    generalCategories?: GeneralCategory[];
+    generalCategories: GeneralCategory[];
 };
 
 export function ReceiptScanFlow(
