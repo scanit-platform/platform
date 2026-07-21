@@ -1,112 +1,120 @@
 "use client";
 
-    import { useState } from "react";
-    import Link from "next/link";
-    import { useRouter } from "next/navigation";
-    import type { Receipt } from "@/src/entities/receipt/types/receipt";
-    import { CheckIcon } from "@/src/shared/ui/icons/icons";
-    import { Input } from "@/src/shared/ui/input/input";
-    import { Button } from "@/src/shared/ui/button/button";
-    import { ApiError } from "@/src/shared/api/client";
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { Receipt } from "@/src/entities/receipt/types/receipt";
+import { CheckIcon } from "@/src/shared/ui/icons/icons";
+import { Input } from "@/src/shared/ui/input/input";
+import { Button } from "@/src/shared/ui/button/button";
+import { ApiError } from "@/src/shared/api/client";
+import type { GeneralCategory } from "@/src/entities/category/types/category";
+import { PlusIcon } from "@/src/shared/ui/icons/icons";
 
-    export function VerifyReceiptStep({
-                                            receipt,
-                                            onScanAnotherAction,
-                                            onVerifyAction,
-                                            onSaveAction,
-                                        }: {
-        receipt: Receipt;
-        onScanAnotherAction?: () => void;
-        onVerifyAction?: () => void;
-        onSaveAction?: (updated: Receipt) => void;
-    }) {
-        const router = useRouter();
-        const [vendorName, setVendorName] = useState(receipt.vendorName ?? "");
-        const [totalAmount, setTotalAmount] = useState(
-            receipt.totalAmount != null ? String(receipt.totalAmount) : ""
-        );
-        const [transactionAmount, setTransactionAmount] = useState(
-            receipt.transactionAmount != null ? String(receipt.transactionAmount) : ""
-        );
-        const [transactionDate, setTransactionDate] = useState(
-            receipt.transactionDate ?? ""
-        );
-        const [isSaving, setIsSaving] = useState(false);
-        const [error, setError] = useState("");
+export function VerifyReceiptStep({
+    receipt,
+    onScanAnotherAction,
+    onVerifyAction,
+    onSaveAction,
+    generalCategories,
+}: {
+    receipt: Receipt;
+    onScanAnotherAction?: () => void;
+    onVerifyAction?: () => void;
+    onSaveAction?: (updated: Receipt) => void;
+    generalCategories: GeneralCategory[];
+}) {
+    const router = useRouter();
 
-        async function handleSave() {
-                setError("");
-            if (!vendorName.trim()) { setError("Vendor name is required."); return; }
-            if (!totalAmount) { setError("Total amount is required."); return; }
-            if (!transactionDate) { setError("Transaction date is required."); return; }
+    // Receipt Data State
+    const [vendorName, setVendorName] = useState(receipt.vendorName ?? "");
+    const [totalAmount, setTotalAmount] = useState(
+        receipt.totalAmount != null ? String(receipt.totalAmount) : ""
+    );
+    const [transactionAmount, setTransactionAmount] = useState(
+        receipt.transactionAmount != null ? String(receipt.transactionAmount) : ""
+    );
+    const [transactionDate, setTransactionDate] = useState(
+        receipt.transactionDate ?? ""
+    );
 
-            setIsSaving(true);
+    // Category State
+    const [generalCategoryId, setGeneralCategoryId] = useState(
+        receipt.generalCategoryId ?? generalCategories[0]?.id ?? ""
+    );
+    const [customCategoryId, setCustomCategoryId] = useState("");
+    const [customCategoryName, setCustomCategoryName] = useState("");
 
-            console.log("handleSave fired - sending:",{
-               vendorName: vendorName.trim(),
-               totalAmount: parseFloat(totalAmount),
-               transactionAmount: transactionAmount
-                            ? parseFloat(transactionAmount)
-                            : parseFloat(totalAmount),
-                transactionDate,
+    // UI Status State
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState("");
+
+    async function handleSave() {
+        setError("");
+        if (!vendorName.trim()) { setError("Vendor name is required."); return; }
+        if (!totalAmount) { setError("Total amount is required."); return; }
+        if (!transactionDate) { setError("Transaction date is required."); return; }
+
+        setIsSaving(true);
+
+        try {
+            const res = await fetch(`/api/receipt/${receipt.id}`, {
+                method: "PUT",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    vendorName: vendorName.trim(),
+                    totalAmount: parseFloat(totalAmount),
+                    transactionAmount: transactionAmount
+                        ? parseFloat(transactionAmount)
+                        : parseFloat(totalAmount),
+                    transactionDate,
+                    generalCategoryId,
+                }),
             });
 
-            try {
-                const res = await fetch(`/api/receipt/${receipt.id}`, {
-                    method: "PUT",
-                    credentials: "include",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        vendorName: vendorName.trim(),
-                        totalAmount: parseFloat(totalAmount),
-                        transactionAmount: transactionAmount
-                            ? parseFloat(transactionAmount)
-                            : parseFloat(totalAmount),
-                        transactionDate,
-                    }),
-                });
-
-                console.log("PUT status:", res.status);
-
-                if (!res.ok) {
-                    const body = await res.json().catch(() => ({}));
-                    throw new Error(body.message ?? "Failed to save receipt.");
-                }
-
-                const updatedReceipt = await res.json();
-                console.log("PUT response:", updatedReceipt);
-                onSaveAction?.(updatedReceipt);
-                onVerifyAction?.();
-                router.refresh();
-
-            } catch (err) {
-                console.error("handleSave error:", err);
-                setError(
-                    err instanceof ApiError || err instanceof Error
-                        ? err.message
-                        : "Could not save receipt. Try again.",
-                );
-            } finally {
-                setIsSaving(false);
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.message ?? "Failed to save receipt.");
             }
-        }
 
-        return (
+            const updatedReceipt = await res.json();
+            onSaveAction?.(updatedReceipt);
+            onVerifyAction?.();
+            router.refresh();
+
+        } catch (err) {
+            console.error("handleSave error:", err);
+            setError(
+                err instanceof ApiError || err instanceof Error
+                    ? err.message
+                    : "Could not save receipt. Try again.",
+            );
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    return (
         <div className="space-y-5">
-            {/* Success banner */}
+            {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                    {error}
+                </div>
+            )}
+
             <div className="rounded-lg border border-(--scanit-primary-softer) bg-(--scanit-primary-soft) px-4 py-3 text-sm font-semibold text-(--scanit-primary)">
-        <span className="inline-flex items-center gap-2">
-          <CheckIcon />
-          Receipt #{receipt.id} saved successfully.
-        </span>
+                <span className="inline-flex items-center gap-2">
+                    <CheckIcon />
+                    Receipt #{receipt.id} saved successfully.
+                </span>
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2">
-                {/* Receipt image */}
                 <div className="flex flex-col gap-2">
-          <span className="text-[0.75rem] font-medium text-(--scanit-text-muted) uppercase tracking-wide">
-            Receipt Image
-          </span>
+                    <span className="text-[0.75rem] font-medium text-(--scanit-text-muted) uppercase tracking-wide">
+                        Receipt Image
+                    </span>
                     {receipt.imageUrl ? (
                         <div className="overflow-y-auto rounded-xl border border-(--scanit-border) bg-(--surface-1) max-h-[50vh]">
                             <img
@@ -124,30 +132,27 @@
                     )}
                 </div>
 
-                {/* Receipt data from entity */}
                 <div className="flex flex-col gap-3">
-          <span className="text-[0.75rem] font-medium text-(--scanit-text-muted) uppercase tracking-wide">
-            Receipt Data
-          </span>
+                    <span className="text-[0.75rem] font-medium text-(--scanit-text-muted) uppercase tracking-wide">
+                        Receipt Data
+                    </span>
 
-                <div className={"grid grid-cols-2 gap-x-3 gap-y-4"}>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-4">
+                        <ReceiptField label="Scanned Vendor" value={receipt.vendorName} />
+                        <Input
+                            label="Update Vendor"
+                            name="vendorName"
+                            onChange={(event) => setVendorName(event.target.value)}
+                            placeholder="Supervalu"
+                            value={vendorName}
+                        />
 
-                    <ReceiptField label="Scanned Vendor" value={receipt.vendorName} />
-                    <Input
-                        label="Update Vendor"
-                        name="vendorName"
-                        onChange={(event) => setVendorName(event.target.value)}
-                        placeholder="Supervalu"
-                        value={vendorName}
-                    />
-
-
-                    <ReceiptField
-                        label="Scanned Total Amount"
-                        value={receipt.totalAmount != null
-                            ? `€${Number(receipt.totalAmount).toFixed(2)}`
-                            : null}
-                    />
+                        <ReceiptField
+                            label="Scanned Total Amount"
+                            value={receipt.totalAmount != null
+                                ? `€${Number(receipt.totalAmount).toFixed(2)}`
+                                : null}
+                        />
                         <Input
                             inputMode="decimal"
                             label="Update Total Amount"
@@ -160,14 +165,12 @@
                             value={totalAmount}
                         />
 
-
-
-                    <ReceiptField
-                        label="Scanned Transaction Amount"
-                        value={receipt.transactionAmount != null
-                            ? `€${Number(receipt.transactionAmount).toFixed(2)}`
-                            : null}
-                    />
+                        <ReceiptField
+                            label="Scanned Transaction Amount"
+                            value={receipt.transactionAmount != null
+                                ? `€${Number(receipt.transactionAmount).toFixed(2)}`
+                                : null}
+                        />
                         <Input
                             inputMode="decimal"
                             label="Update Transaction Amount"
@@ -180,8 +183,9 @@
                             value={transactionAmount}
                         />
 
-                    <ReceiptField label="Scanned Date" value={formatDisplayDate(receipt.transactionDate)} />
-                        <Input className={"justify-end"}
+                        <ReceiptField label="Scanned Date" value={formatDisplayDate(receipt.transactionDate)} />
+                        <Input
+                            className="justify-end"
                             label="Updated Date"
                             name="transactionDate"
                             onChange={(event) => setTransactionDate(event.target.value)}
@@ -191,7 +195,32 @@
                         />
                     </div>
 
-                    {/* OCR status indicator */}
+                    <div className="grid gap-5 lg:grid-cols[minmax(0,0.7fr)_minmax(0,1.3fr)]">
+                        <section className="scanit-auth-card p-5">
+                            <h2 className="font-serif text-xl font-bold text-[var(--scanit-text)]">
+                                Add Category
+                            </h2>
+                                <label className="block">
+                                    <span className="scanit-form-label">General category</span>
+                                    <select
+                                        className="auth-glass-field h-11 w-full rounded-lg px-3 text-sm"
+                                        name="generalCategoryId"
+                                        value={generalCategoryId}
+                                        onChange={(e) => setGeneralCategoryId(e.target.value)}
+                                        required
+                                    >
+                                        <option value="" disabled>Select a category</option>
+                                        {generalCategories?.map((category) => (
+                                            <option key={category.id} value={category.id}>
+                                                {category.icon ? `${category.icon} ` : ""}
+                                                {category.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                        </section>
+                    </div>
+
                     <div className={`rounded-lg px-3 py-2 text-[0.8125rem] font-medium ${
                         receipt.ocrStatus === "COMPLETED"
                             ? "bg-green-50 border border-green-200 text-green-700"
@@ -204,7 +233,6 @@
                 </div>
             </div>
 
-            {/* Action buttons */}
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end pt-2">
                 {onScanAnotherAction && (
                     <button
@@ -232,11 +260,10 @@
     );
 }
 
-// Simple field display
 function ReceiptField({
-                          label,
-                          value,
-                      }: {
+    label,
+    value,
+}: {
     label: string;
     value: string | number | null | undefined;
 }) {
@@ -244,9 +271,9 @@ function ReceiptField({
     return (
         <div className="flex flex-col gap-1">
             <span className="text-[0.8rem] px-2 py-1 font-medium text-(--scanit-label)">
-             {label}
+                {label}
             </span>
-            <div className={`grow rounded-lg border  px-3 py-2 ${
+            <div className={`grow rounded-lg border px-3 py-2 ${
                 hasValue
                     ? "border-(--scanit-border) bg-(--surface-1) text-(--scanit-text)"
                     : "border-red-200 bg-red-50 text-red-400"
@@ -258,8 +285,8 @@ function ReceiptField({
 }
 
 function formatDisplayDate(dateStr: string | null | undefined): string | null {
-        if (!dateStr) return null;
-        const [year, month, day] = dateStr.split("-");
-        if (!year || !month || !day) return dateStr;
-        return `${day}/${month}/${year}`;
+    if (!dateStr) return null;
+    const [year, month, day] = dateStr.split("-");
+    if (!year || !month || !day) return dateStr;
+    return `${day}/${month}/${year}`;
 }
