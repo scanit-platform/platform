@@ -31,11 +31,11 @@ async function fetchCategoryJson<TResponse>(
     const token = await getAuthToken();
 
     if (!token) {
-        throw new CategoryServiceError("Authentication is required", "Unauthorised");
+        throw new CategoryServiceError("Authentication is required", "unauthorized");
     }
 
   try {
-    return await apiFetch<TResponse>(path, init, {getAuthToken: token});
+    return await apiFetch<TResponse>(path, init, {authToken: token});
   } catch (error) {
     if (!(error instanceof ApiError)) {
       throw error;
