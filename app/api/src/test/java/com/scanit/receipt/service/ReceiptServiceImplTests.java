@@ -334,6 +334,64 @@ public class ReceiptServiceImplTests {
         )
         .isInstanceOf(IllegalArgumentException.class);
     }
+    
+    @Test
+    void shouldThrowExceptionWhenFileIsNull() {
+
+        assertThatThrownBy(() ->
+                receiptService.uploadReceipt(
+                        null,
+                        1L
+                ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Receipt file is required");
+    }
+    
+    @Test
+    void shouldThrowExceptionWhenReceiptNotFoundOnUpdate() {
+
+        when(receiptRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        ReceiptUpdateRequestDTO dto =
+                new ReceiptUpdateRequestDTO(
+                        null,
+                        null,
+                        null,
+                        null
+                );
+
+        assertThatThrownBy(() ->
+                receiptService.updateReceipt(
+                        1L,
+                        dto
+                ))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Receipt not found: 1");
+    }
+    
+    @Test
+    void shouldThrowExceptionWhenReceiptNotFoundOnExtractAndUpdate() {
+
+        when(receiptRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        ReceiptExtractRequestDTO dto =
+                new ReceiptExtractRequestDTO(
+                        1L,
+                        "receipt.png"
+                );
+
+        assertThatThrownBy(() ->
+                receiptService.extractAndUpdate(
+                        1L,
+                        dto
+                ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Receipt Not Found: 1");
+    }
+    
+    
 
     private User createMockUser() {
         return new User(
