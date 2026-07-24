@@ -205,6 +205,18 @@ public class ReceiptServiceImpl implements ReceiptService {
         if (dto.transactionAmount() != null) receipt.setTransactionAmount(dto.transactionAmount());
         if (dto.transactionDate() != null) receipt.setTransactionDate(dto.transactionDate());
 
+        if (dto.generalCategoryId() != null || dto.customCategoryId() != null) {
+            CategorySelection categorySelection =
+                    categoryReferenceService.resolveOptionalSelection(
+                            receipt.getUser().getId(),
+                            dto.generalCategoryId(),
+                            dto.customCategoryId()
+                    );
+
+            receipt.setGeneralCategory(categorySelection.generalCategory());
+            receipt.setCustomCategory(categorySelection.customCategory());
+        }
+
         return receiptRepository.save(receipt);
     }
 

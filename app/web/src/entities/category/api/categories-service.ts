@@ -1,4 +1,5 @@
 import { ApiError, apiFetch } from "@/src/shared/api/client";
+import { getAuthToken } from "@/src/features/auth/model/session";
 import type {
   CategoryId,
   CreateCustomCategoryInput,
@@ -27,8 +28,14 @@ async function fetchCategoryJson<TResponse>(
   path: string,
   init: RequestInit = {},
 ): Promise<TResponse> {
+    const token = await getAuthToken();
+
+    if (!token) {
+        throw new CategoryServiceError("Authentication is required", "unauthorized");
+    }
+
   try {
-    return await apiFetch<TResponse>(path, init);
+    return await apiFetch<TResponse>(path, init, {authToken: token});
   } catch (error) {
     if (!(error instanceof ApiError)) {
       throw error;
