@@ -54,12 +54,14 @@ pipeline {
                 branch 'develop'
             }
             steps {
-                dir('app/api') {
-                    withCredentials([file(credentialsId: 'scanit-staging-env', variable: 'ENV_FILE')]) {
-                        sh 'cp "$ENV_FILE" .env'
+                withEnv(["PATH+DOCKER=/usr/local/bin"]) {
+                    dir('app/api') {
+                        withCredentials([file(credentialsId: 'scanit-staging-env', variable: 'ENV_FILE')]) {
+                            sh 'cp "$ENV_FILE" .env'
+                        }
+                        sh 'docker compose build'
+                        sh 'docker compose up -d'
                     }
-                    sh 'docker compose build'
-                    sh 'docker compose up -d'
                 }
             }
         }
