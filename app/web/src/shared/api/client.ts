@@ -16,12 +16,13 @@ export class ApiError extends Error {
 }
 
 export function getApiBaseUrl() {
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL?.trim() ||
-    process.env.API_URL?.trim() ||
-    "http://localhost:8080";
+  const isServer = typeof window === "undefined";
 
-  return apiUrl.replace(/\/+$/, "");
+  const apiUrl = isServer
+    ? process.env.API_URL?.trim() || process.env.NEXT_PUBLIC_API_URL?.trim()
+    : process.env.NEXT_PUBLIC_API_URL?.trim() || process.env.API_URL?.trim();
+
+  return (apiUrl || "http://localhost:8080").replace(/\/+$/, "");
 }
 
 export function getApiRequestUrl(path: string) {
