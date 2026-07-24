@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'feat/ci-cd', url: 'https://github.com/scanit-platform/platform.git'
+                git branch: 'develop', url: 'https://github.com/scanit-platform/platform.git'
             }
         }
         stage('Build') {
