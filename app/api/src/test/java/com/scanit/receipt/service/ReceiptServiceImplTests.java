@@ -3,6 +3,7 @@ package com.scanit.receipt.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -26,6 +27,7 @@ import com.scanit.receipt.repository.ReceiptRepository;
 import com.scanit.user.model.User;
 import com.scanit.user.model.UserStatus;
 import com.scanit.user.repository.UserRepository;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -287,6 +289,109 @@ public class ReceiptServiceImplTests {
                         .name()
         ).isEqualTo(key);
     }
+    
+    @Test
+    void shouldThrowExceptionWhenUserIdIsNull() {
+
+        assertThatThrownBy(() ->
+                receiptService.search(
+                        null,
+                        null,
+                        null
+                ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("userId is required");
+    }
+    
+    @Test
+    void shouldNotThrowExceptionWhenSearchingWithValidUserId() {
+
+        assertDoesNotThrow(() -> 
+            receiptService.search(
+                    1L,
+                    null,
+                    null
+            )
+        );
+    }
+    
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "",
+            " ",
+            "invalid.png"
+    })
+    void shouldRejectInvalidReceiptKeys(String key) {
+
+        ReceiptExtractRequestDTO dto =
+                new ReceiptExtractRequestDTO(
+                        1L,
+                        key
+                );
+
+        assertThatThrownBy(() ->
+                receiptService.extract(dto)
+        )
+        .isInstanceOf(IllegalArgumentException.class);
+    }
+    
+    @Test
+    void shouldThrowExceptionWhenFileIsNull() {
+
+        assertThatThrownBy(() ->
+                receiptService.uploadReceipt(
+                        null,
+                        1L
+                ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Receipt file is required");
+    }
+    
+    @Test
+    void shouldThrowExceptionWhenReceiptNotFoundOnUpdate() {
+
+        when(receiptRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        ReceiptUpdateRequestDTO dto =
+                new ReceiptUpdateRequestDTO(
+                        null,
+                        null,
+                        null,
+                        null
+                );
+
+        assertThatThrownBy(() ->
+                receiptService.updateReceipt(
+                        1L,
+                        dto
+                ))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Receipt not found: 1");
+    }
+    
+    @Test
+    void shouldThrowExceptionWhenReceiptNotFoundOnExtractAndUpdate() {
+
+        when(receiptRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        ReceiptExtractRequestDTO dto =
+                new ReceiptExtractRequestDTO(
+                        1L,
+                        "receipt.png"
+                );
+
+        assertThatThrownBy(() ->
+                receiptService.extractAndUpdate(
+                        1L,
+                        dto
+                ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Receipt Not Found: 1");
+    }
+    
+    
 
     private User createMockUser() {
         return new User(
