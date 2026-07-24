@@ -57,7 +57,7 @@ pipeline {
                 withEnv(["PATH+DOCKER=/usr/local/bin"]) {
                     dir('app/api') {
                         withCredentials([file(credentialsId: 'scanit-staging-env', variable: 'ENV_FILE')]) {
-                            sh 'cp "$ENV_FILE" .env'
+                            sh 'rm -f .env && cp "$ENV_FILE" .env'
                         }
                         sh 'docker compose build'
                         sh 'docker compose up -d'
