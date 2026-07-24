@@ -10,11 +10,8 @@ RUN mvn -B clean verify
 FROM eclipse-temurin:25
 WORKDIR /app
 
-ENV SPRING_PROFILES_ACTIVE=prod
 ENV JAVA_OPTS="-XX:MaxRAMPercentage=75.0"
 
 COPY --from=build /workspace/target/*.jar /app/app.jar
-
-EXPOSE 8080
 
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]

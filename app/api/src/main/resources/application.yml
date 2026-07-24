@@ -60,7 +60,7 @@ app:
     max-name-length: ${APP_CATEGORIES_MAX_NAME_LENGTH:100}
 
 server:
-  port: ${PORT:8081}
+  port: ${PORT:8080}
   forward-headers-strategy: framework
   shutdown: graceful
 

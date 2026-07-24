@@ -1,17 +1,15 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:scanit-local;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    username: sa
-    password: ""
-    driver-class-name: org.h2.Driver
-  jpa:
-    show-sql: true
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:scanit_db}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:postgres}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:}}
+    driver-class-name: org.postgresql.Driver
   flyway:
     enabled: true
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    locations: classpath:db/migration
+    clean-disabled: true
+  jpa:
+    show-sql: false
 
 app:
   security:
