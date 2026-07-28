@@ -4,9 +4,11 @@ import com.scanit.receipt.dto.ReceiptDTO;
 import com.scanit.receipt.dto.ReceiptExtractRequestDTO;
 import com.scanit.receipt.dto.ReceiptUpdateRequestDTO;
 import com.scanit.receipt.exception.ReceiptNotFoundException;
+import com.scanit.receipt.mapper.ReceiptMapper;
 import com.scanit.receipt.model.Receipt;
 import com.scanit.receipt.service.ReceiptService;
 import com.scanit.receipt.service.S3StorageService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,85 +23,130 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/receipt")
 @CrossOrigin
+@SecurityRequirement(name = "bearerAuth")
 public class ReceiptController {
+
     private final ReceiptService receiptService;
     private final S3StorageService s3StorageService;
+    private final ReceiptMapper receiptMapper;
 
-    private ReceiptDTO toDTO(Receipt receipt) {
-        return new ReceiptDTO(
-                receipt.getId(),
-                receipt.getVendorName(),
-                receipt.getTransactionAmount(),
-                receipt.getTotalAmount(),
-                receipt.getTransactionDate(),
-                receipt.getImageUrl(),
-                receipt.getOcrStatus(),
-                receipt.getUser().getId(),
-                receipt.getGeneralCategory() == null ? null : receipt.getGeneralCategory().getId(),
-                receipt.getCustomCategory() == null ? null : receipt.getCustomCategory().getId()
-        );
-    }
-
-    public ReceiptController(ReceiptService receiptService, S3StorageService s3StorageService) {
+    public ReceiptController(
+            ReceiptService receiptService,
+            S3StorageService s3StorageService,
+            ReceiptMapper receiptMapper
+    ) {
         this.receiptService = receiptService;
         this.s3StorageService = s3StorageService;
+        this.receiptMapper = receiptMapper;
     }
 
     @PostMapping
-    public ResponseEntity<ReceiptDTO> createReceipt(@RequestBody ReceiptDTO dto) {
-        return ResponseEntity.status(201)
+    public ResponseEntity<ReceiptDTO> createReceipt(
+            @RequestBody ReceiptDTO dto
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
                 .body(receiptService.save(dto));
     }
 
     @GetMapping
     public List<ReceiptDTO> findAll() {
-        List<ReceiptDTO> dtos =  new ArrayList<>();
+        List<ReceiptDTO> dtos = new ArrayList<>();
 
         for (Receipt receipt : receiptService.findAll()) {
-            dtos.add(toDTO(receipt));
+            dtos.add(receiptMapper.toDTO(receipt));
         }
-        return  dtos;
+
+        return dtos;
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ReceiptDTO> getById(@PathVariable Long id) {
+    public ResponseEntity<ReceiptDTO> getById(
+            @PathVariable Long id
+    ) {
         Receipt receipt = receiptService.findById(id)
                 .orElseThrow(() ->
-                        new ReceiptNotFoundException(id));
+                        new ReceiptNotFoundException(id)
+                );
 
-        return ResponseEntity.ok(toDTO(receipt));
+        return ResponseEntity.ok(
+                receiptMapper.toDTO(receipt)
+        );
     }
 
     @DeleteMapping("/{id}")
-    public void deleteById(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteById(
+            @PathVariable Long id
+    ) {
         receiptService.deleteByReceiptId(id);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/save-as-new")
+    public ResponseEntity<ReceiptDTO> saveDuplicateAsNew(
+            @PathVariable Long id
+    ) {
+        ReceiptDTO savedReceipt =
+                receiptService.saveDuplicateAsNew(id);
+
+        return ResponseEntity.ok(savedReceipt);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ReceiptDTO> updateReceipt(
             @PathVariable Long id,
-            @RequestBody ReceiptUpdateRequestDTO dto) {
-        Receipt updated = receiptService.updateReceipt(id, dto);
-        return ResponseEntity.ok(toDTO(updated));
+            @RequestBody ReceiptUpdateRequestDTO dto
+    ) {
+        Receipt updated =
+                receiptService.updateReceipt(id, dto);
+
+        return ResponseEntity.ok(
+                receiptMapper.toDTO(updated)
+        );
     }
 
-    @PostMapping("/upload")
+    @PostMapping(
+            value = "/upload",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ResponseEntity<ReceiptDTO> uploadReceipt(
-            @RequestParam Long userId,
-            @RequestParam MultipartFile file) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(receiptService.uploadReceipt(file, userId));
+            @RequestParam("userId") Long userId,
+            @RequestPart("file") MultipartFile file
+    ) {
+        ReceiptDTO uploadedReceipt =
+                receiptService.uploadReceipt(
+                        file,
+                        userId
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(uploadedReceipt);
     }
 
     @GetMapping("/{receiptId}/download")
-    public ResponseEntity<byte[]> downloadReceipt(@PathVariable Long receiptId) {
-        Receipt receipt = receiptService.findById(receiptId)
-                .orElseThrow(() -> new ReceiptNotFoundException(receiptId));
+    public ResponseEntity<byte[]> downloadReceipt(
+            @PathVariable Long receiptId
+    ) {
+        Receipt receipt =
+                receiptService.findById(receiptId)
+                        .orElseThrow(() ->
+                                new ReceiptNotFoundException(
+                                        receiptId
+                                )
+                        );
 
-        byte[] file = s3StorageService.downloadReceipt(receipt.getImageUrl());
+        byte[] file =
+                s3StorageService.downloadReceipt(
+                        receipt.getImageUrl()
+                );
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=receipt.jpg")
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=receipt.jpg"
+                )
                 .contentType(MediaType.IMAGE_JPEG)
                 .body(file);
     }
@@ -107,34 +154,53 @@ public class ReceiptController {
     @GetMapping("/search")
     public List<ReceiptDTO> search(
             @RequestParam Long userId,
-            @RequestParam(required = false) String vendorName,
-            @RequestParam(required = false) LocalDate transactionDate
+            @RequestParam(required = false)
+            String vendorName,
+            @RequestParam(required = false)
+            LocalDate transactionDate
     ) {
-        List<Receipt> receipts = receiptService.search(userId, vendorName, transactionDate);
+        List<Receipt> receipts =
+                receiptService.search(
+                        userId,
+                        vendorName,
+                        transactionDate
+                );
+
         List<ReceiptDTO> dtos = new ArrayList<>();
 
         for (Receipt receipt : receipts) {
-            dtos.add(toDTO(receipt));
+            dtos.add(receiptMapper.toDTO(receipt));
         }
 
         return dtos;
     }
-    
+
     @PostMapping("/extract")
-    public ResponseEntity<ReceiptDTO> extractReceipt(@RequestBody ReceiptExtractRequestDTO dto) {
-        return ResponseEntity.status(201)
+    public ResponseEntity<ReceiptDTO> extractReceipt(
+            @RequestBody ReceiptExtractRequestDTO dto
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
                 .body(receiptService.extract(dto));
     }
 
     @PutMapping("/{id}/extract")
     public ResponseEntity<ReceiptDTO> extractAndUpdate(
             @PathVariable Long id,
-            @RequestBody ReceiptExtractRequestDTO dto) {
-        return ResponseEntity.ok(receiptService.extractAndUpdate(id,dto));
+            @RequestBody ReceiptExtractRequestDTO dto
+    ) {
+        return ResponseEntity.ok(
+                receiptService.extractAndUpdate(id, dto)
+        );
     }
 
     @ExceptionHandler(ReceiptNotFoundException.class)
-    public ResponseEntity<String> handleReceiptNotFoundException(ReceiptNotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+    public ResponseEntity<String>
+    handleReceiptNotFoundException(
+            ReceiptNotFoundException exception
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(exception.getMessage());
     }
 }

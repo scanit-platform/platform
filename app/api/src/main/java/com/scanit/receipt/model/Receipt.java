@@ -55,6 +55,23 @@ public class Receipt {
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
+    @Column(name = "image_hash", length = 64)
+    private String imageHash;
+
+    @Column(name = "is_duplicate", nullable = false)
+    private boolean duplicate = false;
+
+    @Column(name = "saved_as_duplicate", nullable = false)
+    private boolean savedAsDuplicate = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "duplicate_match_reason", length = 30)
+    private DuplicateMatchReason duplicateMatchReason;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "duplicate_of_receipt_id")
+    private Receipt duplicateOf;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "general_category_id")
     private GeneralCategory generalCategory;

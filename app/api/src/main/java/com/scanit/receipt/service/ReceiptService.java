@@ -32,4 +32,5 @@ public interface ReceiptService {
     ReceiptDTO extractAndUpdate(Long receiptId, ReceiptExtractRequestDTO dto);
 
     ReceiptDTO uploadReceipt(MultipartFile file, Long userId);
+    ReceiptDTO saveDuplicateAsNew(Long receiptId);
 }

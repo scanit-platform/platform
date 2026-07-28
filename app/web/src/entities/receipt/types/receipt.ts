@@ -1,9 +1,15 @@
 export type ReceiptOcrStatus =
-  | "PENDING"
-  | "PROCESSING"
-  | "COMPLETED"
-  | "FAILED"
-  | "CANCELLED";
+    | "PENDING"
+    | "PROCESSING"
+    | "COMPLETED"
+    | "DUPLICATE_REVIEW"
+    | "FAILED"
+    | "CANCELLED";
+
+export type DuplicateMatchReason =
+    | "IMAGE_HASH"
+    | "RECEIPT_DETAILS"
+    | "BOTH";
 
 export type Receipt = {
   customCategoryId: string | null;
@@ -16,6 +22,11 @@ export type Receipt = {
   transactionDate: string;
   userId: number;
   vendorName: string;
+
+  duplicate: boolean;
+  savedAsDuplicate: boolean;
+  duplicateOfReceiptId: number | null;
+  duplicateMatchReason: DuplicateMatchReason | null;
 };
 
 export type CreateReceiptInput = {

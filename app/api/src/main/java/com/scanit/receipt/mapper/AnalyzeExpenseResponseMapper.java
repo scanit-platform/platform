@@ -3,7 +3,6 @@ package com.scanit.receipt.mapper;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
@@ -55,7 +54,9 @@ public class AnalyzeExpenseResponseMapper {
     }
 
     private LocalDate parseTransactionDate(String value) {
-        if (value == null || value.isBlank()) return null;
+        if (value == null || value.isBlank()) {
+            return null;
+        }
 
         List<DateTimeFormatter> formatters = List.of(
                 DateTimeFormatter.ofPattern("dd/MM/yyyy"),
@@ -68,13 +69,19 @@ public class AnalyzeExpenseResponseMapper {
                 DateTimeFormatter.ofPattern("d MMM yyyy")
         );
 
+        String normalizedValue = value.trim();
+
         for (DateTimeFormatter formatter : formatters) {
             try {
-                return LocalDate.parse(value.trim(), formatter);
-            } catch (DateTimeParseException e) {
+                return LocalDate.parse(normalizedValue, formatter);
+            } catch (DateTimeParseException exception) {
             }
         }
 
-        return null;
+        throw new DateTimeParseException(
+                "Unsupported receipt date format",
+                normalizedValue,
+                0
+        );
     }
 }

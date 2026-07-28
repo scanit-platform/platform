@@ -1,25 +1,13 @@
 package com.scanit.receipt.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 import com.scanit.category.service.CategoryReferenceService;
 import com.scanit.receipt.dto.ReceiptDTO;
 import com.scanit.receipt.dto.ReceiptExtractRequestDTO;
 import com.scanit.receipt.exception.ReceiptNotExtractedException;
+import com.scanit.receipt.exception.ReceiptNotFoundException;
 import com.scanit.receipt.mapper.AnalyzeExpenseResponseMapper;
 import com.scanit.receipt.mapper.ReceiptMapper;
+import com.scanit.receipt.model.DuplicateMatchReason;
 import com.scanit.receipt.model.OCRStatus;
 import com.scanit.receipt.model.Receipt;
 import com.scanit.receipt.repository.ReceiptRepository;
@@ -30,11 +18,27 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.services.textract.TextractClient;
 import software.amazon.awssdk.services.textract.model.AnalyzeExpenseRequest;
 import software.amazon.awssdk.services.textract.model.AnalyzeExpenseResponse;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class ReceiptServiceImplTests {
@@ -58,6 +62,12 @@ public class ReceiptServiceImplTests {
     private S3StorageService s3StorageService;
 
     @Mock
+    private PerceptualHashService perceptualHashService;
+
+    @Mock
+    private DuplicateReceiptService duplicateReceiptService;
+
+    @Mock
     private CategoryReferenceService categoryReferenceService;
 
     private ReceiptServiceImpl receiptService;
@@ -71,6 +81,8 @@ public class ReceiptServiceImplTests {
                 textractClient,
                 analyzeExpenseResponseMapper,
                 s3StorageService,
+                perceptualHashService,
+                duplicateReceiptService,
                 categoryReferenceService,
                 "test-bucket"
         );
@@ -95,7 +107,10 @@ public class ReceiptServiceImplTests {
                 textractClient,
                 receiptRepository,
                 receiptMapper,
-                analyzeExpenseResponseMapper
+                analyzeExpenseResponseMapper,
+                s3StorageService,
+                perceptualHashService,
+                duplicateReceiptService
         );
     }
 
@@ -104,8 +119,7 @@ public class ReceiptServiceImplTests {
         User user = createMockUser();
 
         String key = "test-receipt.png";
-        String imageUrl =
-                "https://test-bucket.s3.amazonaws.com/" + key;
+        String imageUrl = toImageUrl(key);
 
         Receipt existingReceipt =
                 createPendingReceipt(user, imageUrl);
@@ -144,7 +158,10 @@ public class ReceiptServiceImplTests {
                 .thenReturn(null);
 
         ReceiptExtractRequestDTO dto =
-                new ReceiptExtractRequestDTO(1L, key);
+                new ReceiptExtractRequestDTO(
+                        1L,
+                        key
+                );
 
         assertThatThrownBy(() -> receiptService.extract(dto))
                 .isInstanceOf(
@@ -162,7 +179,12 @@ public class ReceiptServiceImplTests {
         assertThat(existingReceipt.getOcrStatus())
                 .isEqualTo(OCRStatus.FAILED);
 
-        verifyNoInteractions(receiptMapper);
+        verifyNoInteractions(
+                receiptMapper,
+                s3StorageService,
+                perceptualHashService,
+                duplicateReceiptService
+        );
     }
 
     @Test
@@ -170,8 +192,7 @@ public class ReceiptServiceImplTests {
         User user = createMockUser();
 
         String key = "test-receipt.png";
-        String imageUrl =
-                "https://test-bucket.s3.amazonaws.com/" + key;
+        String imageUrl = toImageUrl(key);
 
         Receipt existingReceipt =
                 createPendingReceipt(user, imageUrl);
@@ -179,10 +200,10 @@ public class ReceiptServiceImplTests {
         existingReceipt.setId(1L);
 
         Receipt extractedReceipt =
-                createMockReceipt();
+                createExtractedReceipt();
 
         ReceiptDTO expectedDto =
-                createMockReceiptDTO();
+                createReceiptDTO();
 
         AnalyzeExpenseResponse response =
                 AnalyzeExpenseResponse.builder().build();
@@ -217,11 +238,20 @@ public class ReceiptServiceImplTests {
         when(analyzeExpenseResponseMapper.toEntity(response))
                 .thenReturn(extractedReceipt);
 
+        when(duplicateReceiptService.checkAndMarkDuplicate(
+                any(Receipt.class)
+        )).thenAnswer(invocation ->
+                invocation.getArgument(0)
+        );
+
         when(receiptMapper.toDTO(existingReceipt))
                 .thenReturn(expectedDto);
 
         ReceiptExtractRequestDTO dto =
-                new ReceiptExtractRequestDTO(1L, key);
+                new ReceiptExtractRequestDTO(
+                        1L,
+                        key
+                );
 
         ReceiptDTO resultDto =
                 receiptService.extract(dto);
@@ -239,8 +269,7 @@ public class ReceiptServiceImplTests {
 
         assertThat(existingReceipt.getTransactionAmount())
                 .isEqualTo(
-                        extractedReceipt
-                                .getTransactionAmount()
+                        extractedReceipt.getTransactionAmount()
                 );
 
         assertThat(existingReceipt.getTotalAmount())
@@ -250,21 +279,189 @@ public class ReceiptServiceImplTests {
 
         assertThat(existingReceipt.getTransactionDate())
                 .isEqualTo(
-                        extractedReceipt
-                                .getTransactionDate()
+                        extractedReceipt.getTransactionDate()
                 );
 
-        /*
-         * URL должен остаться у уже существующей записи.
-         */
         assertThat(existingReceipt.getImageUrl())
                 .isEqualTo(imageUrl);
 
         assertThat(savedStatuses).containsExactly(
-                OCRStatus.PROCESSING,
+                OCRStatus.PROCESSING
+        );
+
+        verify(duplicateReceiptService)
+                .checkAndMarkDuplicate(existingReceipt);
+
+        assertExtractionRequest(key);
+    }
+
+    @Test
+    void shouldDeleteS3ObjectBeforeDeletingReceipt() {
+        User user = createMockUser();
+
+        Receipt receipt = createPendingReceipt(
+                user,
+                toImageUrl("duplicate.png")
+        );
+
+        receipt.setId(15L);
+
+        when(receiptRepository.findById(15L))
+                .thenReturn(Optional.of(receipt));
+
+        receiptService.deleteByReceiptId(15L);
+
+        InOrder deletionOrder = inOrder(
+                s3StorageService,
+                receiptRepository
+        );
+
+        deletionOrder.verify(s3StorageService)
+                .deleteReceipt(receipt.getImageUrl());
+
+        deletionOrder.verify(receiptRepository)
+                .delete(receipt);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenDeletingUnknownReceipt() {
+        when(receiptRepository.findById(999L))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                receiptService.deleteByReceiptId(999L)
+        )
+                .isInstanceOf(
+                        ReceiptNotFoundException.class
+                )
+                .hasMessage(
+                        "Receipt with id 999 not found"
+                );
+
+        verifyNoInteractions(s3StorageService);
+    }
+
+    @Test
+    void shouldSaveDuplicateAsNewAndKeepDuplicateMetadata() {
+        User user = createMockUser();
+
+        Receipt existingReceipt = createPendingReceipt(
+                user,
+                toImageUrl("existing.png")
+        );
+
+        existingReceipt.setId(5L);
+        existingReceipt.setOcrStatus(
                 OCRStatus.COMPLETED
         );
 
+        Receipt duplicateReceipt = createPendingReceipt(
+                user,
+                toImageUrl("duplicate.png")
+        );
+
+        duplicateReceipt.setId(10L);
+        duplicateReceipt.setDuplicate(true);
+        duplicateReceipt.setSavedAsDuplicate(false);
+        duplicateReceipt.setDuplicateOf(existingReceipt);
+
+        duplicateReceipt.setDuplicateMatchReason(
+                DuplicateMatchReason.IMAGE_HASH
+        );
+
+        duplicateReceipt.setOcrStatus(
+                OCRStatus.DUPLICATE_REVIEW
+        );
+
+        ReceiptDTO expectedDto = new ReceiptDTO(
+                10L,
+                duplicateReceipt.getVendorName(),
+                duplicateReceipt.getTransactionAmount(),
+                duplicateReceipt.getTotalAmount(),
+                duplicateReceipt.getTransactionDate(),
+                duplicateReceipt.getImageUrl(),
+                OCRStatus.COMPLETED,
+                1L,
+                null,
+                null,
+                true,
+                true,
+                5L,
+                DuplicateMatchReason.IMAGE_HASH
+        );
+
+        when(receiptRepository.findById(10L))
+                .thenReturn(
+                        Optional.of(duplicateReceipt)
+                );
+
+        when(receiptRepository.save(duplicateReceipt))
+                .thenReturn(duplicateReceipt);
+
+        when(receiptMapper.toDTO(duplicateReceipt))
+                .thenReturn(expectedDto);
+
+        ReceiptDTO result =
+                receiptService.saveDuplicateAsNew(10L);
+
+        assertThat(result)
+                .isEqualTo(expectedDto);
+
+        assertThat(duplicateReceipt.isDuplicate())
+                .isTrue();
+
+        assertThat(duplicateReceipt.isSavedAsDuplicate())
+                .isTrue();
+
+        assertThat(duplicateReceipt.getDuplicateOf())
+                .isSameAs(existingReceipt);
+
+        assertThat(
+                duplicateReceipt.getDuplicateMatchReason()
+        ).isEqualTo(
+                DuplicateMatchReason.IMAGE_HASH
+        );
+
+        assertThat(duplicateReceipt.getOcrStatus())
+                .isEqualTo(OCRStatus.COMPLETED);
+
+        verify(receiptRepository)
+                .save(duplicateReceipt);
+
+        verify(receiptMapper)
+                .toDTO(duplicateReceipt);
+    }
+
+    @Test
+    void shouldRejectSaveAsNewForReceiptNotAwaitingDuplicateReview() {
+        User user = createMockUser();
+
+        Receipt receipt = createPendingReceipt(
+                user,
+                toImageUrl("normal.png")
+        );
+
+        receipt.setId(20L);
+        receipt.setDuplicate(false);
+        receipt.setOcrStatus(
+                OCRStatus.COMPLETED
+        );
+
+        when(receiptRepository.findById(20L))
+                .thenReturn(Optional.of(receipt));
+
+        assertThatThrownBy(() ->
+                receiptService.saveDuplicateAsNew(20L)
+        )
+                .isInstanceOf(
+                        IllegalStateException.class
+                )
+                .hasMessage(
+                        "Receipt is not awaiting duplicate review"
+                );
+    }
+
+    private void assertExtractionRequest(String key) {
         ArgumentCaptor<AnalyzeExpenseRequest> captor =
                 ArgumentCaptor.forClass(
                         AnalyzeExpenseRequest.class
@@ -316,35 +513,54 @@ public class ReceiptServiceImplTests {
         return receipt;
     }
 
-    private Receipt createMockReceipt() {
+    private Receipt createExtractedReceipt() {
         Receipt receipt = new Receipt();
 
         receipt.setVendorName("Tesco");
+
         receipt.setTransactionAmount(
                 BigDecimal.valueOf(21.99)
         );
+
         receipt.setTotalAmount(
                 BigDecimal.valueOf(22.99)
         );
-        receipt.setTransactionDate(LocalDate.now());
-        receipt.setImageUrl("https://google.com");
-        receipt.setOcrStatus(OCRStatus.COMPLETED);
+
+        receipt.setTransactionDate(
+                LocalDate.now()
+        );
+
+        receipt.setImageUrl(
+                "https://example.com/receipt"
+        );
+
+        receipt.setOcrStatus(
+                OCRStatus.COMPLETED
+        );
 
         return receipt;
     }
 
-    private ReceiptDTO createMockReceiptDTO() {
+    private ReceiptDTO createReceiptDTO() {
         return new ReceiptDTO(
                 1L,
                 "Tesco",
                 BigDecimal.valueOf(21.99),
                 BigDecimal.valueOf(22.99),
                 LocalDate.now(),
-                "https://test-bucket.s3.amazonaws.com/test-receipt.png",
+                toImageUrl("test-receipt.png"),
                 OCRStatus.COMPLETED,
                 1L,
                 null,
+                null,
+                false,
+                false,
+                null,
                 null
         );
+    }
+
+    private String toImageUrl(String key) {
+        return "https://test-bucket.s3.amazonaws.com/" + key;
     }
 }
